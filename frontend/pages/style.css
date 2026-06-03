@@ -1,0 +1,398 @@
+/* ════════════════════════════════════════════
+   URGENCES SN — Feuille de style globale
+   Stack : HTML5 / CSS3 / Bootstrap 5
+   Auteur : Projet mémoire de licence
+════════════════════════════════════════════ */
+
+/* ── Variables couleurs (prompt) ── */
+:root {
+    --rouge:        #E53935;
+    --rouge-fonce:  #B71C1C;
+    --rouge-clair:  #FFEBEE;
+    --bleu-samu:    #1E88E5;
+    --gris-clair:   #F5F5F5;
+    --gris-texte:   #616161;
+    --sombre:       #0B0F1A;
+    --card-dark:    #1A2235;
+    --border-dark:  rgba(255,255,255,.07);
+}
+
+/* ── Typographie ── */
+body {
+    font-family: 'Inter', sans-serif;
+    color: #212121;
+}
+h1, h2, h3, h4, h5, .font-poppins {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════ */
+.navbar-urgences {
+    background: rgba(255,255,255,.97) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 20px rgba(0,0,0,.08);
+}
+.logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--rouge), var(--rouge-fonce));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(229,57,53,.35);
+    flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════
+   BOUTON SOS ANIMÉ
+════════════════════════════════════════════ */
+.btn-sos {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    color: var(--rouge);
+    text-decoration: none;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 0 rgba(255,255,255,.5), 0 24px 64px rgba(0,0,0,.35);
+    animation: sos-pulse 2s infinite;
+    transition: transform .15s;
+    cursor: pointer;
+}
+.btn-sos:hover  { transform: scale(1.06); color: var(--rouge-fonce); }
+.btn-sos:active { transform: scale(.96); }
+
+@keyframes sos-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55), 0 24px 64px rgba(0,0,0,.35); }
+    70%  { box-shadow: 0 0 0 32px rgba(255,255,255,0), 0 24px 64px rgba(0,0,0,.35); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0), 0 24px 64px rgba(0,0,0,.35); }
+}
+
+/* Anneaux autour du SOS */
+.sos-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.18);
+    animation: ring-expand 2s infinite;
+    pointer-events: none;
+}
+@keyframes ring-expand {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ════════════════════════════════════════════
+   SECTIONS PAGE D'ACCUEIL
+════════════════════════════════════════════ */
+
+/* Hero — Dakar / ville sénégalaise (photo urbaine Afrique de l'Ouest) */
+.hero-section {
+    min-height: 100vh;
+    background:
+        linear-gradient(135deg, rgba(229,57,53,.82) 0%, rgba(183,28,28,.75) 40%, rgba(13,17,23,.92) 100%),
+        url('https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1600&q=80') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    padding: 100px 0 60px;
+    position: relative;
+    overflow: hidden;
+}
+/* Motif de points subtil */
+.hero-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.04) 1px, transparent 0);
+    background-size: 40px 40px;
+    pointer-events: none;
+}
+
+/* Section "Comment ça marche" */
+.section-comment { padding: 90px 0; background: #fff; }
+
+/* Section services — secours / ambulance */
+.section-services {
+    padding: 90px 0;
+    background:
+        linear-gradient(rgba(245,245,245,.96), rgba(245,245,245,.96)),
+        url('https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1600&q=60') center/cover no-repeat;
+}
+
+/* Section CTA — pompiers intervention */
+.section-cta {
+    padding: 100px 0;
+    background:
+        linear-gradient(135deg, rgba(13,17,23,.93) 0%, rgba(22,33,62,.93) 100%),
+        url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1600&q=80') center/cover no-repeat;
+    text-align: center;
+}
+
+/* ── Cartes étapes ── */
+.etape-card {
+    border-radius: 20px;
+    padding: 36px 28px;
+    border: 1px solid #F0F0F0;
+    transition: transform .3s, box-shadow .3s;
+    background: #fff;
+    text-align: center;
+    height: 100%;
+}
+.etape-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(229,57,53,.1);
+}
+.etape-icon {
+    width: 68px; height: 68px;
+    border-radius: 18px;
+    background: var(--rouge-clair);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.9rem;
+    margin-bottom: 18px;
+}
+
+/* ── Cartes services ── */
+.service-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px 26px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    border: none;
+    height: 100%;
+    transition: transform .3s, box-shadow .3s;
+}
+.service-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.12);
+}
+
+/* ════════════════════════════════════════════
+   FORMULAIRE SOS
+════════════════════════════════════════════ */
+/* SOS header — urgence médicale */
+.sos-header {
+    background:
+        linear-gradient(135deg, rgba(229,57,53,.92) 0%, rgba(183,28,28,.88) 100%),
+        url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&q=70') center/cover no-repeat;
+    padding: 48px 0 40px;
+    color: white;
+}
+
+/* Boutons de sélection du type d'urgence */
+.type-urgence-btn {
+    cursor: pointer;
+    border-radius: 16px;
+    border: 2px solid #E9ECEF;
+    background: #fff;
+    padding: 22px 12px;
+    transition: all .2s;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+.type-urgence-btn:hover   { border-color: var(--rouge); box-shadow: 0 4px 16px rgba(229,57,53,.15); }
+.type-urgence-btn.selected {
+    border-color: var(--rouge);
+    background: var(--rouge-clair);
+    box-shadow: 0 4px 16px rgba(229,57,53,.2);
+}
+.type-urgence-btn .icon { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+
+/* ════════════════════════════════════════════
+   PAGE DE CONNEXION
+════════════════════════════════════════════ */
+/* Login — salle de commandement / centre de contrôle */
+.login-page {
+    min-height: 100vh;
+    background:
+        linear-gradient(135deg, rgba(13,17,23,.92) 0%, rgba(22,33,62,.88) 100%),
+        url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1600&q=70') center/cover no-repeat fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.login-card {
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 420px;
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD (commun pompiers / samu / admin)
+════════════════════════════════════════════ */
+.dash-body {
+    background: var(--sombre);
+    color: #E2E8F0;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+/* Sidebar */
+/* Sidebar — texture sombre Dakar */
+.sidebar {
+    width: 248px;
+    height: 100vh;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    background:
+        linear-gradient(180deg, rgba(7,11,18,.98) 0%, rgba(7,11,18,.99) 100%),
+        url('https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=30') center/cover no-repeat;
+    border-right: 1px solid var(--border-dark);
+}
+.sidebar-logo {
+    padding: 18px;
+    border-bottom: 1px solid var(--border-dark);
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; flex-shrink: 0;
+}
+.sidebar-logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #E53935, #B71C1C);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(229,57,53,.4);
+    flex-shrink: 0;
+}
+.sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
+.sidebar-label {
+    font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .12em;
+    color: rgba(255,255,255,.35);
+    padding: 10px 8px 4px;
+}
+.nav-link-dash {
+    display: flex; align-items: center; gap: 9px;
+    color: rgba(255,255,255,.6);
+    border-radius: 9px;
+    padding: .55rem .85rem;
+    font-size: .855rem; font-weight: 500;
+    transition: all .18s;
+    text-decoration: none;
+    margin-bottom: 2px;
+}
+.nav-link-dash i { font-size: .95rem; width: 16px; text-align: center; flex-shrink: 0; }
+.nav-link-dash:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nav-link-dash.active {
+    background: rgba(229,57,53,.14);
+    color: #fff;
+    border-left: 3px solid var(--rouge);
+    padding-left: calc(.85rem - 3px);
+}
+.sidebar-user {
+    padding: 14px;
+    border-top: 1px solid var(--border-dark);
+    flex-shrink: 0;
+}
+.user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #374151, #1F2937);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+}
+
+/* Contenu principal */
+.main-content { margin-left: 248px; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar {
+    background: #111827;
+    border-bottom: 1px solid var(--border-dark);
+    padding: .85rem 1.75rem;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+}
+.page-content { padding: 26px; flex: 1; }
+
+/* Composants dashboard */
+.card-dark {
+    background: var(--card-dark);
+    border: 1px solid var(--border-dark);
+    border-radius: 14px;
+}
+.stat-number {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.1rem; font-weight: 900; line-height: 1;
+}
+
+/* Badges de statut */
+.badge-en_attente     { background: rgba(239,68,68,.14);  color: #FCA5A5; border: 1px solid rgba(239,68,68,.25);  border-radius: 50px; padding: 3px 10px; font-size: .75rem; font-weight: 600; display: inline-block; }
+.badge-pris_en_charge { background: rgba(245,158,11,.14); color: #FCD34D; border: 1px solid rgba(245,158,11,.25); border-radius: 50px; padding: 3px 10px; font-size: .75rem; font-weight: 600; display: inline-block; }
+.badge-en_route       { background: rgba(59,130,246,.14); color: #93C5FD; border: 1px solid rgba(59,130,246,.25); border-radius: 50px; padding: 3px 10px; font-size: .75rem; font-weight: 600; display: inline-block; }
+.badge-sur_place      { background: rgba(139,92,246,.14); color: #C4B5FD; border: 1px solid rgba(139,92,246,.25); border-radius: 50px; padding: 3px 10px; font-size: .75rem; font-weight: 600; display: inline-block; }
+.badge-termine        { background: rgba(34,197,94,.14);  color: #86EFAC; border: 1px solid rgba(34,197,94,.25);  border-radius: 50px; padding: 3px 10px; font-size: .75rem; font-weight: 600; display: inline-block; }
+
+/* Ligne incident */
+.incident-row {
+    cursor: pointer; border-radius: 10px;
+    padding: .6rem .8rem;
+    border: 1px solid transparent;
+    transition: all .15s;
+}
+.incident-row:hover   { background: rgba(255,255,255,.04); }
+.incident-row.selected { background: rgba(229,57,53,.08); border-color: rgba(229,57,53,.25); }
+
+/* Panneau de détail */
+.detail-panel {
+    background: var(--card-dark);
+    border: 1px solid var(--border-dark);
+    border-radius: 14px;
+    padding: 1.4rem;
+    min-height: 280px;
+}
+
+/* Onglets sombres */
+.nav-tabs-dark { border-bottom: 1px solid var(--border-dark); gap: 2px; margin-bottom: 20px; }
+.nav-tabs-dark .nav-link {
+    color: rgba(255,255,255,.5); border: none;
+    border-radius: 8px 8px 0 0;
+    padding: .5rem 1.1rem; font-size: .855rem; font-weight: 500;
+    background: transparent; transition: all .15s; cursor: pointer;
+}
+.nav-tabs-dark .nav-link:hover  { color: #fff; background: rgba(255,255,255,.04); }
+.nav-tabs-dark .nav-link.active { color: #fff; background: rgba(229,57,53,.1); border-bottom: 2px solid var(--rouge); }
+
+/* Notification popup */
+.notif-popup {
+    position: fixed; top: 80px; right: 20px; z-index: 9999;
+    background: #1A2235; border: 1px solid rgba(229,57,53,.4);
+    border-left: 4px solid var(--rouge);
+    border-radius: 12px; padding: 14px 18px;
+    min-width: 300px; max-width: 360px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    animation: slideIn .3s ease;
+    display: none;
+}
+@keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Dot clignotant */
+.dot-pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    animation: blink 1.2s infinite; display: inline-block;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+/* Carte Leaflet */
+.leaflet-container { border-radius: 12px; }
+
+/* ── Responsive sidebar mobile ── */
+@media (max-width: 768px) {
+    .sidebar      { transform: translateX(-100%); transition: transform .28s; }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    .btn-sos      { width: 160px; height: 160px; }
+}
+
+/* ── Footer ── */
+.footer-urgences { background: #0D1117; padding: 52px 0 24px; }
