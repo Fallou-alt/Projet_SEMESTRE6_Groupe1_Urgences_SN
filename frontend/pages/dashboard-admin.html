@@ -423,31 +423,31 @@
     let tousStructures = [];
 
     document.addEventListener('DOMContentLoaded', () => {
-        const user = requireAuth('admin');
-        if (user) {
-            document.getElementById('user-nom').textContent    = user.prenom + ' ' + user.nom;
-            document.getElementById('user-avatar').textContent = user.prenom.charAt(0).toUpperCase();
+        const utilisateur = verifierAuth('ADMIN');
+        if (utilisateur) {
+            document.getElementById('user-nom').textContent    = utilisateur.prenom + ' ' + utilisateur.nom;
+            document.getElementById('user-avatar').textContent = utilisateur.prenom.charAt(0).toUpperCase();
         }
         demarrerHorloge('horloge');
     });
 
     async function chargerDashboard() {
         try {
-            const data = await apiCall('/admin/dashboard');
-            const s = data.stats;
-            document.getElementById('s-total').textContent   = s.total;
-            document.getElementById('s-attente').textContent = s.en_attente;
-            document.getElementById('s-cours').textContent   = s.en_cours;
-            document.getElementById('s-termines').textContent= s.termines;
-            document.getElementById('s-jour').textContent    = s.aujourd_hui;
-            document.getElementById('s-agents').textContent  = s.agents_actifs;
+            const data = await apiCall('/admin/tableau');
+            const s = data.statistiques;
+            document.getElementById('s-total').textContent    = s.incidents;
+            document.getElementById('s-attente').textContent  = s.en_attente;
+            document.getElementById('s-cours').textContent    = s.en_cours;
+            document.getElementById('s-termines').textContent = s.termines;
+            document.getElementById('s-jour').textContent     = s.aujourd_hui;
+            document.getElementById('s-agents').textContent   = s.agents;
 
-            document.getElementById('tbody-recents').innerHTML = data.recents.map(i => `
+            document.getElementById('tbody-recents').innerHTML = data.incidents_recents.map(i => `
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
                     <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
-                    <td><span class="badge-${i.statut}">${STATUTS_LABELS[i.statut]}</span></td>
+                    <td><span class="badge-${i.statut}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                 </tr>
             `).join('');
@@ -488,7 +488,7 @@
     async function supprimerIncident(id) {
         if (!confirm('Supprimer cet incident ?')) return;
         const data = await apiCall(`/admin/incidents/${id}`, 'DELETE');
-        if (data.success) chargerIncidents();
+        if (data.succes) chargerIncidents();
     }
 
     async function chargerStructures() {
@@ -568,13 +568,13 @@
 
     async function toggleStructure(id) {
         const data = await apiCall(`/admin/structures/${id}/toggle`, 'PATCH');
-        if (data.success) chargerStructures();
+        if (data.succes) chargerStructures();
     }
 
     async function sauvegarderStructure() {
-        const msg = document.getElementById('msg-structure');
+        const msg    = document.getElementById('msg-structure');
         const editId = document.getElementById('st-edit-id').value;
-        const body = {
+        const corps  = {
             nom:               document.getElementById('st-nom').value.trim(),
             sigle:             document.getElementById('st-sigle').value.trim(),
             type:              document.getElementById('st-type').value,
@@ -585,7 +585,7 @@
             telephone:         document.getElementById('st-tel').value.trim(),
             email:             document.getElementById('st-email').value.trim(),
         };
-        if (!body.nom) {
+        if (!corps.nom) {
             msg.textContent = '⚠️ Le nom est requis.';
             msg.className = 'rounded-3 p-2 mb-3';
             msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
@@ -593,9 +593,9 @@
         }
         try {
             const endpoint = editId ? `/admin/structures/${editId}` : '/admin/structures';
-            const method   = editId ? 'PUT' : 'POST';
-            const data = await apiCall(endpoint, method, body);
-            if (data.success) {
+            const methode  = editId ? 'PUT' : 'POST';
+            const data = await apiCall(endpoint, methode, corps);
+            if (data.succes) {
                 msg.textContent = editId ? '✅ Structure mise à jour.' : '✅ Structure créée.';
                 msg.className = 'rounded-3 p-2 mb-3';
                 msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
@@ -610,10 +610,10 @@
     }
 
     async function chargerBilan() {
-        const annee = document.getElementById('bilan-annee').value;
-        const mois  = document.getElementById('bilan-mois').value;
+        const annee  = document.getElementById('bilan-annee').value;
+        const mois   = document.getElementById('bilan-mois').value;
         const params = mois ? `?annee=${annee}&mois=${mois}` : `?annee=${annee}`;
-        const b = await apiCall('/admin/bilan' + params);
+        const b = await apiCall('/admin/statistiques' + params);
         const MOIS_NOMS = ['','Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
         document.getElementById('bilan-contenu').innerHTML = `
             <div class="col-6 col-md-3">
@@ -698,7 +698,7 @@
 
     async function chargerAgents() {
         try {
-            const data = await apiCall('/admin/agents');
+            const data = await apiCall('/admin/responsables');
             document.getElementById('tbody-agents').innerHTML = data.map(a => `
                 <tr>
                     <td class="fw-semibold">${a.prenom} ${a.nom}</td>
@@ -722,24 +722,23 @@
     }
 
     async function toggleAgent(id) {
-        const data = await apiCall(`/admin/agents/${id}/toggle`, 'PATCH');
-        if (data.success) chargerAgents();
+        const data = await apiCall(`/admin/utilisateurs/${id}/toggle`, 'PATCH');
+        if (data.succes) chargerAgents();
     }
 
     async function creerAgent() {
         const msg = document.getElementById('msg-agent');
         msg.className = 'rounded-3 p-2 mb-3 d-none';
 
-        const body = {
+        const corps = {
             prenom:       document.getElementById('a-prenom').value.trim(),
             nom:          document.getElementById('a-nom').value.trim(),
             identifiant:  document.getElementById('a-identifiant').value.trim(),
             mot_de_passe: document.getElementById('a-mdp').value,
-            role:         document.getElementById('a-role').value,
             structure_id: document.getElementById('a-structure').value || null,
         };
 
-        if (!body.prenom || !body.nom || !body.identifiant || !body.mot_de_passe) {
+        if (!corps.prenom || !corps.nom || !corps.identifiant || !corps.mot_de_passe) {
             msg.textContent = '⚠️ Tous les champs sont requis.';
             msg.className = 'rounded-3 p-2 mb-3';
             msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
@@ -747,9 +746,9 @@
         }
 
         try {
-            const data = await apiCall('/admin/agents', 'POST', body);
-            if (data.success) {
-                msg.textContent = '✅ Membre créé avec succès.';
+            const data = await apiCall('/admin/responsables', 'POST', corps);
+            if (data.succes) {
+                msg.textContent = '✅ Responsable créé avec succès.';
                 msg.className = 'rounded-3 p-2 mb-3';
                 msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
                 ['a-prenom','a-nom','a-identifiant','a-mdp'].forEach(id => document.getElementById(id).value = '');
@@ -818,10 +817,10 @@
         if (!prenom || !nom) return;
         try {
             const data = await apiCall('/profil/identite', 'PATCH', { prenom, nom });
-            if (data.success) {
-                localStorage.setItem('user', JSON.stringify(data.user));
-                document.getElementById('user-nom').textContent    = data.user.prenom + ' ' + data.user.nom;
-                document.getElementById('user-avatar').textContent = data.user.prenom.charAt(0).toUpperCase();
+            if (data.succes) {
+                localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
+                document.getElementById('user-nom').textContent    = data.utilisateur.prenom + ' ' + data.utilisateur.nom;
+                document.getElementById('user-avatar').textContent = data.utilisateur.prenom.charAt(0).toUpperCase();
                 msg.textContent = '✅ Nom mis à jour.';
                 msg.className = 'rounded-2 p-2 mb-2';
                 msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
@@ -862,7 +861,7 @@
         if (!ancien || !nouveau) return;
         try {
             const data = await apiCall('/profil/password', 'PATCH', { ancien, nouveau });
-            if (data.success) {
+            if (data.succes) {
                 msg.textContent = '✅ Mot de passe modifié.';
                 msg.className = 'rounded-2 p-2 mb-2';
                 msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';

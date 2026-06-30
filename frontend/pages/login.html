@@ -101,18 +101,16 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Connexion...';
 
         try {
-            const data = await apiCall('/login', 'POST', { identifiant, mot_de_passe });
+            const data = await apiCall('/connexion', 'POST', { identifiant, mot_de_passe });
 
             if (data.token) {
-                // Sauvegarder le token et les infos utilisateur
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user',  JSON.stringify(data.user));
+                localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
 
-                // Rediriger selon le rôle
-                const role = data.user.role;
-                if      (role === 'admin')   window.location.href = 'dashboard-admin.html';
-                else if (role === 'pompier') window.location.href = 'dashboard-pompiers.html';
-                else if (role === 'samu')    window.location.href = 'dashboard-samu.html';
+                const role = data.utilisateur.role;
+                if      (role === 'ADMIN')       window.location.href = 'dashboard-admin.html';
+                else if (role === 'RESPONSABLE') window.location.href = 'dashboard-responsable.html';
+                else if (role === 'AGENT')       window.location.href = 'dashboard-agent.html';
             } else {
                 throw new Error(data.message || 'Identifiant ou mot de passe incorrect.');
             }
@@ -138,12 +136,11 @@
         if (e.key === 'Enter') seConnecter();
     });
 
-    // Si déjà connecté, rediriger directement
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (user && getToken()) {
-        if      (user.role === 'admin')   window.location.href = 'dashboard-admin.html';
-        else if (user.role === 'pompier') window.location.href = 'dashboard-pompiers.html';
-        else if (user.role === 'samu')    window.location.href = 'dashboard-samu.html';
+    const utilisateur = getUtilisateur();
+    if (utilisateur && getToken()) {
+        if      (utilisateur.role === 'ADMIN')       window.location.href = 'dashboard-admin.html';
+        else if (utilisateur.role === 'RESPONSABLE') window.location.href = 'dashboard-responsable.html';
+        else if (utilisateur.role === 'AGENT')       window.location.href = 'dashboard-agent.html';
     }
 </script>
 </body>

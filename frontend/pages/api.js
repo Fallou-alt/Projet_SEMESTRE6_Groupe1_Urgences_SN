@@ -1,18 +1,14 @@
-/* ════════════════════════════════════════════
-   URGENCES SN — Configuration & utilitaires JS
-   Utilisé par toutes les pages frontend
-════════════════════════════════════════════ */
-
-// URL de base de l'API Laravel (backend)
 const API_URL = 'http://localhost:8000/api';
 
-// Token CSRF stocké après connexion
 function getToken() {
     return localStorage.getItem('token') || '';
 }
 
-// En-têtes communs pour les requêtes API
-function apiHeaders() {
+function getUtilisateur() {
+    return JSON.parse(localStorage.getItem('utilisateur') || 'null');
+}
+
+function entetes() {
     return {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -20,75 +16,68 @@ function apiHeaders() {
     };
 }
 
-// Appel API générique
-async function apiCall(endpoint, method = 'GET', body = null) {
-    const options = { method, headers: apiHeaders() };
-    if (body) options.body = JSON.stringify(body);
-    const res = await fetch(API_URL + endpoint, options);
-    return res.json();
+async function apiCall(endpoint, methode = 'GET', corps = null) {
+    const options = { method: methode, headers: entetes() };
+    if (corps) options.body = JSON.stringify(corps);
+    const reponse = await fetch(API_URL + endpoint, options);
+    return reponse.json();
 }
 
-// Rediriger si non connecté
-function requireAuth(roleAttendu = null) {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user || !getToken()) {
+function verifierAuth(roleAttendu = null) {
+    const utilisateur = getUtilisateur();
+    if (!utilisateur || !getToken()) {
         window.location.href = 'login.html';
         return null;
     }
-    if (roleAttendu && user.role !== roleAttendu && user.role !== 'admin') {
+    if (roleAttendu && utilisateur.role !== roleAttendu && utilisateur.role !== 'ADMIN') {
         window.location.href = 'login.html';
         return null;
     }
-    return user;
+    return utilisateur;
 }
 
-// Déconnexion
 function deconnecter() {
-    apiCall('/logout', 'POST').finally(() => {
+    apiCall('/deconnexion', 'POST').finally(() => {
         localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('utilisateur');
         window.location.href = 'login.html';
     });
 }
 
-// Labels lisibles des statuts
 const STATUTS_LABELS = {
-    en_attente:     'En attente',
-    pris_en_charge: 'Pris en charge',
-    en_route:       'En route',
-    sur_place:      'Sur place',
-    termine:        'Terminé'
+    EN_ATTENTE : 'En attente',
+    AFFECTE    : 'Affecté',
+    EN_ROUTE   : 'En route',
+    SUR_PLACE  : 'Sur place',
+    TERMINE    : 'Terminé',
+    ANNULE     : 'Annulé'
 };
 
-// Statut suivant dans le flux
-const STATUT_SUIVANT = {
-    en_attente:     'pris_en_charge',
-    pris_en_charge: 'en_route',
-    en_route:       'sur_place',
-    sur_place:      'termine'
+const EMOJIS = {
+    incendie : '🔥',
+    accident : '🚗',
+    medical  : '🏥',
+    autre    : '⚠️'
 };
 
-// Emojis par type d'urgence
-const EMOJIS = { incendie: '🔥', accident: '🚗', medical: '🏥', autre: '⚠️' };
-
-// Son d'alerte simulé (Web Audio API)
 function jouerSonAlerte() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.3, 0.6].forEach(delay => {
+        [0, 0.3, 0.6].forEach(delai => {
             const osc  = ctx.createOscillator();
             const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = 880; osc.type = 'sine';
-            gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
-            osc.start(ctx.currentTime + delay);
-            osc.stop(ctx.currentTime + delay + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, ctx.currentTime + delai);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delai + 0.25);
+            osc.start(ctx.currentTime + delai);
+            osc.stop(ctx.currentTime + delai + 0.25);
         });
-    } catch(e) {}
+    } catch (e) {}
 }
 
-// Horloge temps réel
 function demarrerHorloge(elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -97,7 +86,6 @@ function demarrerHorloge(elementId) {
     setInterval(maj, 1000);
 }
 
-// Afficher une notification popup
 function afficherNotif(titre, texte, popupId = 'notif-popup') {
     const popup = document.getElementById(popupId);
     if (!popup) return;
@@ -107,23 +95,4 @@ function afficherNotif(titre, texte, popupId = 'notif-popup') {
     if (s) s.textContent = texte;
     popup.style.display = 'block';
     setTimeout(() => popup.style.display = 'none', 6000);
-}
-
-// Construire la sidebar avec les infos utilisateur
-function construireSidebar(liens) {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const initiale = (user.prenom || 'U').charAt(0).toUpperCase();
-
-    document.getElementById('user-nom').textContent  = (user.prenom || '') + ' ' + (user.nom || '');
-    document.getElementById('user-role').textContent = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '';
-    document.getElementById('user-avatar').textContent = initiale;
-
-    const nav = document.getElementById('sidebar-nav');
-    if (nav) {
-        nav.innerHTML = liens.map(l => `
-            <a href="${l.href}" class="nav-link-dash ${l.actif ? 'active' : ''}">
-                <i class="bi ${l.icon}"></i> ${l.label}
-            </a>
-        `).join('');
-    }
 }
