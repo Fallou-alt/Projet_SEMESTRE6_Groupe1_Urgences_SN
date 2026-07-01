@@ -1,4 +1,4 @@
-# 🚨 Urgences SN — Plateforme nationale de gestion des urgences
+# 🚨 Urgences SN : Plateforme nationale de gestion des urgences
 
 Plateforme web de gestion des urgences pour le Sénégal.  
 Permet à tout citoyen de signaler une urgence et aux secours (Pompiers, SAMU) de coordonner leurs interventions en temps réel.
