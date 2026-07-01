@@ -25,16 +25,15 @@ class AgentController extends Controller
         ]);
     }
 
-    public function mesMissions(Request $request)
-    {
-        $agent = $request->get('_user');
-
-        return response()->json(
-            Incident::where('agent_id', $agent->id)
-                ->whereIn('statut', ['AFFECTE', 'EN_ROUTE', 'SUR_PLACE'])
-                ->with('victimes')
-                ->latest()->get()
-        );
+    public function mesMissions(Request $request){
+        $agent = $request -> get('_user');
+         return response()->json(
+            incident::where('agent_id', $agent->id)
+            ->whereIn('statut', ['AFFECTE', 'EN_ROUTE', 'SUR_PLACE'])
+            ->with('victimes')
+            ->latest()->get()
+         );
+        
     }
 
     public function historique(Request $request)
@@ -81,3 +80,4 @@ class AgentController extends Controller
         return response()->json(['succes' => true]);
     }
 }
+
