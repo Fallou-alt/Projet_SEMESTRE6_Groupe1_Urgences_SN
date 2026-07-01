@@ -240,13 +240,13 @@
             longitude:          longitude,
             adresse:            document.getElementById('adresse').value,
             description:        document.getElementById('description').value,
-            nom_citoyen:        document.getElementById('nom_citoyen').value,
-            telephone_citoyen:  document.getElementById('telephone_citoyen').value,
+            citoyen_nom:        document.getElementById('nom_citoyen').value,
+            citoyen_telephone:  document.getElementById('telephone_citoyen').value,
         };
 
         try {
             const data = await apiCall('/incidents', 'POST', body);
-            if (data.success) {
+            if (data.succes) {
                 // Rediriger vers la page de suivi
                 window.location.href = `suivi.html?id=${data.id}`;
             } else {

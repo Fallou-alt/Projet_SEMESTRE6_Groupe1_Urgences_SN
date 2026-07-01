@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\Victime;
 use Illuminate\Http\Request;
 
 class AgentController extends Controller
@@ -78,6 +79,48 @@ class AgentController extends Controller
         $incident = Incident::where('agent_id', $agent->id)->findOrFail($id);
         $incident->update(['commentaire' => $request->commentaire]);
 
+        return response()->json(['succes' => true]);
+    }
+
+    public function listeVictimes(Request $request, $id)
+    {
+        $agent    = $request->get('_user');
+        $incident = Incident::where('agent_id', $agent->id)->findOrFail($id);
+        return response()->json($incident->victimes);
+    }
+
+    public function ajouterVictime(Request $request, $id)
+    {
+        $request->validate([
+            'nom'    => 'required|string',
+            'prenom' => 'required|string',
+            'etat'   => 'required|in:leger,grave,critique,decede,inconnu',
+        ]);
+
+        $agent    = $request->get('_user');
+        $incident = Incident::where('agent_id', $agent->id)->findOrFail($id);
+
+        $victime = Victime::create([
+            'incident_id'    => $incident->id,
+            'nom'            => $request->nom,
+            'prenom'         => $request->prenom,
+            'age'            => $request->age,
+            'sexe'           => $request->sexe ?? 'inconnu',
+            'telephone'      => $request->telephone,
+            'groupe_sanguin' => $request->groupe_sanguin ?? 'inconnu',
+            'etat'           => $request->etat,
+            'observations'   => $request->observations,
+        ]);
+
+        return response()->json(['succes' => true, 'victime' => $victime], 201);
+    }
+
+    public function supprimerVictime(Request $request, $id)
+    {
+        $agent   = $request->get('_user');
+        $victime = Victime::findOrFail($id);
+        Incident::where('agent_id', $agent->id)->findOrFail($victime->incident_id);
+        $victime->delete();
         return response()->json(['succes' => true]);
     }
 }

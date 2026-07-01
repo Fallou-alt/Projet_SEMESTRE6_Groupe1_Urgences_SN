@@ -56,6 +56,7 @@ Route::middleware(AuthToken::class . ':RESPONSABLE')->prefix('responsable')->gro
 
     Route::get('/incidents',                    [ResponsableController::class, 'listeIncidents']);
     Route::patch('/incidents/{id}/affecter',    [ResponsableController::class, 'affecterAgent']);
+    Route::patch('/incidents/{id}/statut',      [ResponsableController::class, 'changerStatut']);
     Route::patch('/incidents/{id}/annuler',     [ResponsableController::class, 'annulerIncident']);
 
     Route::get('/incidents/{id}/victimes',      [ResponsableController::class, 'listeVictimes']);
@@ -72,4 +73,7 @@ Route::middleware(AuthToken::class . ':AGENT')->prefix('agent')->group(function 
     Route::get('/historique',                   [AgentController::class, 'historique']);
     Route::patch('/missions/{id}/statut',       [AgentController::class, 'changerStatut']);
     Route::patch('/missions/{id}/commentaire',  [AgentController::class, 'ajouterCommentaire']);
+    Route::get('/missions/{id}/victimes',       [AgentController::class, 'listeVictimes']);
+    Route::post('/missions/{id}/victimes',      [AgentController::class, 'ajouterVictime']);
+    Route::delete('/victimes/{id}',             [AgentController::class, 'supprimerVictime']);
 });

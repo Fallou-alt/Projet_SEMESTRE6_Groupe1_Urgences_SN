@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\Structure;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -14,6 +15,18 @@ class IncidentController extends Controller
             'type_urgence' => 'required|in:incendie,accident,medical,autre',
         ]);
 
+        // Affecter automatiquement à la structure appropriée
+        $typeStructure = match($request->type_urgence) {
+            'medical'  => 'samu',
+            'incendie' => 'pompiers',
+            'accident' => 'pompiers',
+            default    => null,
+        };
+
+        $structure = $typeStructure
+            ? Structure::where('type', $typeStructure)->where('actif', true)->first()
+            : Structure::where('actif', true)->first();
+
         $incident = Incident::create([
             'type_urgence'      => $request->type_urgence,
             'latitude'          => $request->latitude,
@@ -23,6 +36,7 @@ class IncidentController extends Controller
             'citoyen_nom'       => $request->citoyen_nom,
             'citoyen_telephone' => $request->citoyen_telephone,
             'statut'            => 'EN_ATTENTE',
+            'structure_id'      => $structure?->id,
         ]);
 
         return response()->json(['succes' => true, 'id' => $incident->id], 201);

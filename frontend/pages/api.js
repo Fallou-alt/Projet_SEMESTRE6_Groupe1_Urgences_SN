@@ -53,6 +53,25 @@ const STATUTS_LABELS = {
     ANNULE     : 'Annulé'
 };
 
+const STATUT_SUIVANT = {
+    EN_ATTENTE : 'AFFECTE',
+    AFFECTE    : 'EN_ROUTE',
+    EN_ROUTE   : 'SUR_PLACE',
+    SUR_PLACE  : 'TERMINE',
+    TERMINE    : null,
+    ANNULE     : null
+};
+
+// Alias pour compatibilité dashboards
+function requireAuth(role) {
+    const utilisateur = getUtilisateur();
+    if (!utilisateur || !getToken()) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return utilisateur;
+}
+
 const EMOJIS = {
     incendie : '🔥',
     accident : '🚗',
