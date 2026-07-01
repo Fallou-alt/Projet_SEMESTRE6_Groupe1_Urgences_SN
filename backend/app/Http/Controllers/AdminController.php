@@ -97,6 +97,14 @@ class AdminController extends Controller
             'structure_id' => 'required|exists:structures,id',
         ]);
 
+        $structure = Structure::findOrFail($request->structure_id);
+        if ($structure->responsable_id) {
+            return response()->json([
+                'succes'  => false,
+                'message' => 'Cette structure a déjà un responsable assigné.',
+            ], 422);
+        }
+
         $utilisateur = User::create([
             'identifiant'  => $request->identifiant,
             'mot_de_passe' => Hash::make($request->mot_de_passe),
@@ -106,8 +114,7 @@ class AdminController extends Controller
             'structure_id' => $request->structure_id,
         ]);
 
-        Structure::where('id', $request->structure_id)
-            ->update(['responsable_id' => $utilisateur->id]);
+        $structure->update(['responsable_id' => $utilisateur->id]);
 
         return response()->json([
             'succes'      => true,
@@ -132,9 +139,9 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
-        $mois      = $request->get('mois');
-        $requete   = Incident::whereYear('created_at', $annee);
+        $annee   = $request->get('annee', date('Y'));
+        $mois    = $request->get('mois');
+        $requete = Incident::whereYear('created_at', $annee);
 
         if ($mois) {
             $requete->whereMonth('created_at', $mois);
@@ -165,7 +172,7 @@ class AdminController extends Controller
             'par_mois' => collect(range(1, 12))->map(fn($m) => [
                 'mois'  => $m,
                 'total' => $incidents->filter(
-                    fn($i) => (int) date('m', strtotime($i->created_at)) === $m
+                    fn($i) => (int) $i->created_at->format('m') === $m
                 )->count(),
             ]),
             'victimes' => [
@@ -194,11 +201,11 @@ class AdminController extends Controller
                 $incident->id,
                 $incident->type_urgence,
                 $incident->statut,
-                '"' . str_replace('"', '""', $incident->adresse ?? '') . '"',
-                '"' . str_replace('"', '""', $incident->citoyen_nom ?? '') . '"',
+                '"' . $this->champCsvSecurise($incident->adresse) . '"',
+                '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
                 $incident->citoyen_telephone ?? '',
                 $incident->created_at,
-                '"' . $structure . '"',
+                '"' . $this->champCsvSecurise($structure) . '"',
             ]) . "\n";
         }
 
@@ -206,5 +213,16 @@ class AdminController extends Controller
             'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=bilan_urgences_{$annee}.csv",
         ]);
+    }
+    private function champCsvSecurise(?string $valeur): string
+    {
+        $valeur = $valeur ?? '';
+        $valeur = str_replace('"', '""', $valeur);
+
+        if ($valeur !== '' && in_array($valeur[0], ['=', '+', '-', '@'], true)) {
+            $valeur = "'" . $valeur;
+        }
+
+        return $valeur;
     }
 }
