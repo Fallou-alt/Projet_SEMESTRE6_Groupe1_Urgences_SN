@@ -31,3 +31,4 @@ class Structure extends Model
         return $this->hasMany(Incident::class);
     }
 }
+// Documentation ajoutée par Mbene
