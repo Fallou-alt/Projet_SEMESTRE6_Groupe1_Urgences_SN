@@ -9,19 +9,10 @@ use Illuminate\Http\Request;
 
 class IncidentController extends Controller
 {
-    /**
-     * Déclarer un incident (citoyen)
-     */
     public function declarer(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'type_urgence' => 'required|in:incendie,accident,medical,autre',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'adresse' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'citoyen_nom' => 'nullable|string|max:255',
-            'citoyen_telephone' => 'nullable|string|max:20',
         ]);
 
         // Affecter automatiquement à la structure appropriée
@@ -37,10 +28,6 @@ class IncidentController extends Controller
             : Structure::where('actif', true)->first();
 
         $incident = Incident::create([
-feature/thiabou
-            ...$validated,
-            'statut' => 'EN_ATTENTE',
-
             'type_urgence'      => $request->type_urgence,
             'latitude'          => $request->latitude,
             'longitude'         => $request->longitude,
@@ -50,44 +37,32 @@ feature/thiabou
             'citoyen_telephone' => $request->citoyen_telephone,
             'statut'            => 'EN_ATTENTE',
             'structure_id'      => $structure?->id,
-develop
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $incident
-        ], 201);
+        return response()->json(['succes' => true, 'id' => $incident->id], 201);
     }
 
-    /**
-     * Suivi d’un incident
-     */
     public function suivi($id)
     {
         $incident = Incident::findOrFail($id);
 
         return response()->json([
-            'id' => $incident->id,
+            'id'           => $incident->id,
             'type_urgence' => $incident->type_urgence,
-            'statut' => $incident->statut,
-            'adresse' => $incident->adresse,
-            'cree_le' => $incident->created_at,
-            'mis_a_jour' => $incident->updated_at,
+            'statut'       => $incident->statut,
+            'adresse'      => $incident->adresse,
+            'cree_le'      => $incident->created_at,
+            'mis_a_jour'   => $incident->updated_at,
         ]);
     }
 
-    /**
-     * Statistiques publiques
-     */
     public function statistiquesPubliques()
     {
         return response()->json([
-            'total' => Incident::count(),
+            'total'    => Incident::count(),
             'en_cours' => Incident::whereNotIn('statut', ['TERMINE', 'ANNULE'])->count(),
-            'jour' => Incident::whereDate('created_at', today())->count(),
-            'agents' => User::where('role', 'AGENT')
-                ->where('actif', true)
-                ->count(),
+            'jour'     => Incident::whereDate('created_at', today())->count(),
+            'agents'   => User::where('role', 'AGENT')->where('actif', true)->count(),
         ]);
     }
 }
