@@ -161,6 +161,18 @@ class ResponsableController extends Controller
         ]);
     }
 
+    public function changerStatut(Request $request, $id)
+    {
+        $request->validate([
+            'statut' => 'required|in:EN_ATTENTE,AFFECTE,EN_ROUTE,SUR_PLACE,TERMINE,ANNULE',
+        ]);
+
+        $incident = Incident::where('structure_id', $this->structureId($request))->findOrFail($id);
+        $incident->update(['statut' => $request->statut]);
+
+        return response()->json(['succes' => true, 'incident' => $incident->load('agent:id,nom,prenom')]);
+    }
+
     public function annulerIncident(Request $request, $id)
     {
         $incident = Incident::where('structure_id', $this->structureId($request))->findOrFail($id);

@@ -232,7 +232,7 @@
     let carteObj     = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-        const user = requireAuth('samu');
+        const user = verifierAuth('RESPONSABLE');
         if (user) {
             document.getElementById('user-nom').textContent    = user.prenom + ' ' + user.nom;
             document.getElementById('user-role').textContent   = 'SAMU';
@@ -243,11 +243,11 @@
 
     async function chargerPatients() {
         try {
-            const data = await apiCall('/incidents/medical');
-            const actifs   = data.filter(i => i.statut !== 'termine');
-            const termines = data.filter(i => i.statut === 'termine');
+            const data = await apiCall('/responsable/incidents');
+            const actifs   = data.filter(i => !['TERMINE','ANNULE'].includes(i.statut));
+            const termines = data.filter(i => i.statut === 'TERMINE');
 
-            const nbAttente = actifs.filter(i => i.statut === 'en_attente').length;
+            const nbAttente = actifs.filter(i => i.statut === 'EN_ATTENTE').length;
             if (nbAttente > nbPrecedent && nbPrecedent >= 0) {
                 afficherNotif('🏥 Nouvelle urgence médicale !', 'Un nouveau patient a été signalé.');
                 jouerSonAlerte();
@@ -256,7 +256,7 @@
             patientsData = actifs;
 
             document.getElementById('stat-attente').textContent  = nbAttente;
-            document.getElementById('stat-cours').textContent    = actifs.filter(i => ['pris_en_charge','en_route','sur_place'].includes(i.statut)).length;
+            document.getElementById('stat-cours').textContent    = actifs.filter(i => ['AFFECTE','EN_ROUTE','SUR_PLACE'].includes(i.statut)).length;
             document.getElementById('stat-termines').textContent = termines.length;
             document.getElementById('stat-total').textContent    = data.length;
             document.getElementById('badge-attente').textContent = nbAttente;
@@ -276,7 +276,7 @@
                             </div>
                             <span class="badge-${i.statut}">${STATUTS_LABELS[i.statut]}</span>
                         </div>
-                        ${i.nom_citoyen ? `<div style="font-size:.8rem;color:rgba(255,255,255,.6)">👤 ${i.nom_citoyen}</div>` : ''}
+                        ${i.citoyen_nom ? `<div style="font-size:.8rem;color:rgba(255,255,255,.6)">👤 ${i.citoyen_nom}</div>` : ''}
                         ${i.adresse ? `<div style="font-size:.75rem;color:rgba(255,255,255,.4)"><i class="bi bi-geo-alt me-1"></i>${i.adresse}</div>` : ''}
                     </div>
                 `).join('');
@@ -286,9 +286,9 @@
                 : termines.map(i => `
                     <tr>
                         <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
-                        <td>${i.nom_citoyen || '—'}</td>
+                        <td>${i.citoyen_nom || '—'}</td>
                         <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
-                        <td style="color:#93C5FD">${i.telephone_citoyen || '—'}</td>
+                        <td style="color:#93C5FD">${i.citoyen_telephone || '—'}</td>
                         <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                     </tr>
                 `).join('');
@@ -326,7 +326,7 @@
 
             <!-- Infos -->
             <div id="sous-info-samu">
-                ${p.nom_citoyen ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">👤 Patient</div><div class="fw-semibold text-white" style="font-size:.85rem">${p.nom_citoyen}${p.telephone_citoyen ? ' · <span style="color:#93C5FD">'+p.telephone_citoyen+'</span>' : ''}</div></div>` : ''}
+                ${p.citoyen_nom ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">👤 Patient</div><div class="fw-semibold text-white" style="font-size:.85rem">${p.citoyen_nom}${p.citoyen_telephone ? ' · <span style="color:#93C5FD">'+p.citoyen_telephone+'</span>' : ''}</div></div>` : ''}
                 ${p.adresse ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">📍 Localisation</div><div class="fw-medium text-white" style="font-size:.85rem">${p.adresse}</div></div>` : ''}
                 <div class="mb-2 p-2 rounded-3" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">🌐 GPS</div><div class="font-monospace" style="font-size:.8rem;color:#93C5FD">${p.latitude}, ${p.longitude}</div></div>
                 ${p.description ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">📋 Situation</div><div style="font-size:.83rem;color:#FCD34D">${p.description}</div></div>` : ''}
@@ -394,7 +394,7 @@
 
     async function chargerVictimesSamu(incidentId) {
         try {
-            const victimes = await apiCall(`/incidents/${incidentId}/victimes`);
+            const victimes = await apiCall(`/responsable/incidents/${incidentId}/victimes`);
             const el = document.getElementById('liste-victimes-samu');
             if (!el) return;
             if (!victimes.length) {
@@ -421,7 +421,7 @@
         const etat   = document.getElementById('vs-etat').value;
         if (!nom || !prenom || !etat) return;
         try {
-            await apiCall(`/incidents/${incidentId}/victimes`, 'POST', {
+            await apiCall(`/responsable/incidents/${incidentId}/victimes`, 'POST', {
                 nom, prenom, etat,
                 age:          document.getElementById('vs-age').value || null,
                 sexe:         document.getElementById('vs-sexe').value,
@@ -439,18 +439,18 @@
 
     async function supprimerVictimeSamu(victimeId, incidentId) {
         if (!confirm('Supprimer cette victime ?')) return;
-        await apiCall(`/victimes/${victimeId}`, 'DELETE');
+        await apiCall(`/responsable/victimes/${victimeId}`, 'DELETE');
         chargerVictimesSamu(incidentId);
     }
 
     async function avancerStatut(id, statut) {
-        const data = await apiCall(`/incidents/${id}/statut`, 'PATCH', { statut });
-        if (data.success) {
-            const idx = patientsData.findIndex(i => i.id === id);
-            if (idx !== -1) patientsData[idx] = data.incident;
-            selectPatient(id);
-            setTimeout(chargerPatients, 400);
+        let data;
+        if (statut === 'ANNULE') {
+            data = await apiCall(`/responsable/incidents/${id}/annuler`, 'PATCH');
+        } else {
+            data = await apiCall(`/responsable/incidents/${id}/statut`, 'PATCH', { statut });
         }
+        if (data.succes) setTimeout(chargerPatients, 300);
     }
 
     function afficherOnglet(nom) {
@@ -465,7 +465,7 @@
             patientsData.forEach(i => {
                 if (!i.latitude || !i.longitude) return;
                 L.circleMarker([i.latitude, i.longitude], { radius: 12, color: '#fff', weight: 2, fillColor: '#3B82F6', fillOpacity: 1 })
-                 .addTo(carteObj).bindPopup(`<strong>Patient #${i.id}</strong><br>${i.nom_citoyen || 'Anonyme'}<br>${i.adresse || ''}`);
+                 .addTo(carteObj).bindPopup(`<strong>Patient #${i.id}</strong><br>${i.citoyen_nom || 'Anonyme'}<br>${i.adresse || ''}`);
             });
         }
     }
@@ -476,7 +476,7 @@
         f.style.display = visible ? 'none' : 'block';
         document.getElementById('id-btn-label').textContent = visible ? 'Modifier mon nom' : 'Annuler';
         if (!visible) {
-            const u = JSON.parse(localStorage.getItem('user') || '{}');
+            const u = JSON.parse(localStorage.getItem('utilisateur') || '{}');
             document.getElementById('id-prenom').value = u.prenom || '';
             document.getElementById('id-nom').value    = u.nom    || '';
         }
@@ -490,10 +490,10 @@
         if (!prenom || !nom) return;
         try {
             const data = await apiCall('/profil/identite', 'PATCH', { prenom, nom });
-            if (data.success) {
-                localStorage.setItem('user', JSON.stringify(data.user));
-                document.getElementById('user-nom').textContent    = data.user.prenom + ' ' + data.user.nom;
-                document.getElementById('user-avatar').textContent = data.user.prenom.charAt(0).toUpperCase();
+            if (data.succes) {
+                localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
+                document.getElementById('user-nom').textContent    = data.utilisateur.prenom + ' ' + data.utilisateur.nom;
+                document.getElementById('user-avatar').textContent = data.utilisateur.prenom.charAt(0).toUpperCase();
                 msg.textContent = '✅ Nom mis à jour.';
                 msg.className = 'rounded-2 p-2 mb-2';
                 msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
@@ -534,7 +534,7 @@
         if (!ancien || !nouveau) return;
         try {
             const data = await apiCall('/profil/password', 'PATCH', { ancien, nouveau });
-            if (data.success) {
+            if (data.succes) {
                 msg.textContent = '✅ Mot de passe modifié.';
                 msg.className = 'rounded-2 p-2 mb-2';
                 msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';

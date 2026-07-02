@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chargement... | Urgences SN</title>
+    <link rel="stylesheet" href="libs/fonts/fonts.css">
+    <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background:#0B0F1A;display:flex;align-items:center;justify-content:center;min-height:100vh">
+    <div class="text-center text-white">
+        <div class="spinner-border text-danger mb-3"></div>
+        <p style="color:rgba(255,255,255,.5);font-size:.9rem">Chargement de votre espace...</p>
+    </div>
+    <script src="api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = verifierAuth('RESPONSABLE');
+            if (!user) return;
+
+            try {
+                const structure = await apiCall('/responsable/structure');
+                const type = structure.type || '';
+                if (type === 'samu') {
+                    window.location.href = 'dashboard-samu.html';
+                } else {
+                    window.location.href = 'dashboard-pompiers.html';
+                }
+            } catch(e) {
+                window.location.href = 'dashboard-pompiers.html';
+            }
+        });
+    </script>
+</body>
+</html>

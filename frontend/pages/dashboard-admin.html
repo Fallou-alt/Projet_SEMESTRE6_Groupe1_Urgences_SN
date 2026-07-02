@@ -180,11 +180,12 @@
                     <select id="filtre-statut" onchange="filtrerIncidents()" class="form-select form-select-sm rounded-3"
                             style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:auto;font-size:.8rem">
                         <option value="">Tous les statuts</option>
-                        <option value="en_attente">En attente</option>
-                        <option value="pris_en_charge">Pris en charge</option>
-                        <option value="en_route">En route</option>
-                        <option value="sur_place">Sur place</option>
-                        <option value="termine">Terminé</option>
+                        <option value="EN_ATTENTE">En attente</option>
+                        <option value="AFFECTE">Affecté</option>
+                        <option value="EN_ROUTE">En route</option>
+                        <option value="SUR_PLACE">Sur place</option>
+                        <option value="TERMINE">Terminé</option>
+                        <option value="ANNULE">Annulé</option>
                     </select>
                 </div>
                 <div class="table-responsive">
@@ -260,9 +261,7 @@
                         <div class="mb-3">
                             <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Rôle</label>
                             <select id="a-role" class="form-select rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem">
-                                <option value="pompier">Pompier</option>
-                                <option value="samu">SAMU</option>
-                                <option value="admin">Admin</option>
+                                <option value="RESPONSABLE">Responsable de structure</option>
                             </select>
                         </div>
                         <div class="mb-4">
@@ -424,11 +423,12 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const utilisateur = verifierAuth('ADMIN');
-        if (utilisateur) {
-            document.getElementById('user-nom').textContent    = utilisateur.prenom + ' ' + utilisateur.nom;
-            document.getElementById('user-avatar').textContent = utilisateur.prenom.charAt(0).toUpperCase();
-        }
+        if (!utilisateur) return;
+        document.getElementById('user-nom').textContent    = utilisateur.prenom + ' ' + utilisateur.nom;
+        document.getElementById('user-avatar').textContent = utilisateur.prenom.charAt(0).toUpperCase();
         demarrerHorloge('horloge');
+        chargerDashboard();
+        setInterval(chargerDashboard, 15000);
     });
 
     async function chargerDashboard() {
@@ -447,7 +447,7 @@
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
                     <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
-                    <td><span class="badge-${i.statut}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
+                    <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                 </tr>
             `).join('');
@@ -471,15 +471,15 @@
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
-                    <td style="color:rgba(255,255,255,.6)">${i.nom_citoyen || '—'}</td>
+                    <td style="color:rgba(255,255,255,.6)">${i.citoyen_nom || '—'}</td>
                     <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
-                    <td><span class="badge-${i.statut}">${STATUTS_LABELS[i.statut]}</span></td>
+                    <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                     <td>
-                        <button onclick="supprimerIncident(${i.id})" class="btn btn-sm rounded-2"
-                                style="background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25);font-size:.72rem">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <a href="suivi.html?id=${i.id}" target="_blank" class="btn btn-sm rounded-2"
+                                style="background:rgba(59,130,246,.15);color:#93C5FD;border:1px solid rgba(59,130,246,.25);font-size:.72rem">
+                            <i class="bi bi-eye"></i>
+                        </a>
                     </td>
                 </tr>
             `).join('');
@@ -803,7 +803,7 @@
         f.style.display = visible ? 'none' : 'block';
         document.getElementById('id-btn-label').textContent = visible ? 'Modifier mon nom' : 'Annuler';
         if (!visible) {
-            const u = JSON.parse(localStorage.getItem('user') || '{}');
+            const u = JSON.parse(localStorage.getItem('utilisateur') || '{}');
             document.getElementById('id-prenom').value = u.prenom || '';
             document.getElementById('id-nom').value    = u.nom    || '';
         }
@@ -878,10 +878,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        chargerDashboard();
-        setInterval(chargerDashboard, 15000);
-    });
+
 </script>
 </body>
 </html>
