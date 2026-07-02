@@ -262,6 +262,7 @@
                             <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Rôle</label>
                             <select id="a-role" class="form-select rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem">
                                 <option value="RESPONSABLE">Responsable de structure</option>
+                                <option value="AGENT">Agent</option>
                             </select>
                         </div>
                         <div class="mb-4">
@@ -730,6 +731,7 @@
         const msg = document.getElementById('msg-agent');
         msg.className = 'rounded-3 p-2 mb-3 d-none';
 
+        const role = document.getElementById('a-role').value;
         const corps = {
             prenom:       document.getElementById('a-prenom').value.trim(),
             nom:          document.getElementById('a-nom').value.trim(),
@@ -746,9 +748,10 @@
         }
 
         try {
-            const data = await apiCall('/admin/responsables', 'POST', corps);
+            const endpoint = role === 'AGENT' ? '/admin/agents' : '/admin/responsables';
+            const data = await apiCall(endpoint, 'POST', corps);
             if (data.succes) {
-                msg.textContent = '✅ Responsable créé avec succès.';
+                msg.textContent = `✅ ${role === 'AGENT' ? 'Agent' : 'Responsable'} créé avec succès.`;
                 msg.className = 'rounded-3 p-2 mb-3';
                 msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
                 ['a-prenom','a-nom','a-identifiant','a-mdp'].forEach(id => document.getElementById(id).value = '');

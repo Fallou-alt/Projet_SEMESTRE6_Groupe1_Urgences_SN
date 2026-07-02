@@ -34,6 +34,7 @@ Route::middleware(AuthToken::class . ':ADMIN')->prefix('admin')->group(function 
 
     Route::get('/responsables',                 [AdminController::class, 'listeResponsables']);
     Route::post('/responsables',                [AdminController::class, 'creerResponsable']);
+    Route::post('/agents',                      [AdminController::class, 'creerAgent']);
     Route::patch('/utilisateurs/{id}/toggle',   [AdminController::class, 'toggleUtilisateur']);
 
     Route::get('/incidents',                    [AdminController::class, 'listeIncidents']);

@@ -80,7 +80,7 @@ class AdminController extends Controller
     public function listeResponsables()
     {
         return response()->json(
-            User::where('role', 'RESPONSABLE')
+            User::whereIn('role', ['RESPONSABLE', 'AGENT'])
                 ->with('structure:id,nom,sigle')
                 ->select('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id', 'created_at')
                 ->get()
@@ -112,6 +112,31 @@ class AdminController extends Controller
         return response()->json([
             'succes'      => true,
             'responsable' => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+        ], 201);
+    }
+
+    public function creerAgent(Request $request)
+    {
+        $request->validate([
+            'identifiant'  => 'required|unique:users',
+            'mot_de_passe' => 'required|min:6',
+            'nom'          => 'required',
+            'prenom'       => 'required',
+            'structure_id' => 'nullable|exists:structures,id',
+        ]);
+
+        $utilisateur = User::create([
+            'identifiant'  => $request->identifiant,
+            'mot_de_passe' => Hash::make($request->mot_de_passe),
+            'nom'          => $request->nom,
+            'prenom'       => $request->prenom,
+            'role'         => 'AGENT',
+            'structure_id' => $request->structure_id,
+        ]);
+
+        return response()->json([
+            'succes' => true,
+            'agent'  => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
         ], 201);
     }
 

@@ -249,6 +249,8 @@
             document.getElementById('user-avatar').textContent = user.prenom.charAt(0).toUpperCase();
         }
         demarrerHorloge('horloge');
+        chargerIncidents();
+        setInterval(chargerIncidents, 10000);
     });
 
     // Charger les incidents depuis l'API
@@ -357,6 +359,16 @@
                 </div>
                 ${incident.description ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">📝 Description</div><div style="font-size:.83rem;color:rgba(255,255,255,.75)">${incident.description}</div></div>` : ''}
                 ${incident.citoyen_nom ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">👤 Citoyen</div><div class="fw-semibold text-white" style="font-size:.85rem">${incident.citoyen_nom}${incident.citoyen_telephone ? ' · <span style="color:#93C5FD">'+incident.citoyen_telephone+'</span>' : ''}</div></div>` : ''}
+                ${incident.statut === 'EN_ATTENTE' ? `
+                <div class="mb-2 p-2 rounded-3" style="background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.15)">
+                    <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">👮 Affecter un agent</div>
+                    <div class="d-flex gap-2">
+                        <select id="select-agent-${incident.id}" class="form-select form-select-sm rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.8rem"></select>
+                        <button onclick="affecterAgent(${incident.id})" class="btn btn-sm rounded-3 fw-semibold" style="background:#E53935;border:none;color:#fff;font-size:.8rem;white-space:nowrap">
+                            <i class="bi bi-person-check me-1"></i>Affecter
+                        </button>
+                    </div>
+                </div>` : ''}
                 ${suivant
                     ? `<button onclick="avancerStatut(${incident.id},'${suivant}')" class="btn w-100 mt-2 fw-semibold rounded-3" style="background:#E53935;border:none;color:#fff;padding:10px;font-size:.85rem">
                            <i class="bi bi-chevron-right me-1"></i> Passer à : ${STATUTS_LABELS[suivant]}
@@ -412,6 +424,7 @@
             </div>
         `;
         chargerVictimes(incident.id);
+        if (incident.statut === 'EN_ATTENTE') chargerAgentsDisponibles(incident.id);
     }
 
     function sousOnglet(nom) {
@@ -482,6 +495,26 @@
                 data = await apiCall(`/responsable/incidents/${id}/statut`, 'PATCH', { statut });
             }
             if (data.succes) setTimeout(chargerIncidents, 300);
+        } catch(e) { console.error(e); }
+    }
+
+    async function affecterAgent(incidentId) {
+        const sel = document.getElementById(`select-agent-${incidentId}`);
+        const agentId = sel?.value;
+        if (!agentId) return;
+        try {
+            const data = await apiCall(`/responsable/incidents/${incidentId}/affecter`, 'PATCH', { agent_id: agentId });
+            if (data.succes) setTimeout(chargerIncidents, 300);
+        } catch(e) { console.error(e); }
+    }
+
+    async function chargerAgentsDisponibles(incidentId) {
+        try {
+            const agents = await apiCall('/responsable/agents');
+            const sel = document.getElementById(`select-agent-${incidentId}`);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">-- Choisir un agent --</option>' +
+                agents.filter(a => a.actif).map(a => `<option value="${a.id}">${a.prenom} ${a.nom}</option>`).join('');
         } catch(e) { console.error(e); }
     }
 
@@ -596,10 +629,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        chargerIncidents();
-        setInterval(chargerIncidents, 10000);
-    });
+
 </script>
 </body>
 </html>
