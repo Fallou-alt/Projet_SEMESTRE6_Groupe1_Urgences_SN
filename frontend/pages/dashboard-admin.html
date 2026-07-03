@@ -14,9 +14,9 @@
         .nav-link-dash.active { background: rgba(139,92,246,.14); border-left: 3px solid #8B5CF6; color: #fff; }
         .btn-admin { background: #8B5CF6; border: none; color: #fff; border-radius: 8px; padding: 8px 16px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .2s; }
         .btn-admin:hover { background: #7C3AED; }
-        .badge-role-admin   { background: rgba(139,92,246,.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
-        .badge-role-pompier { background: rgba(229,57,53,.2);  color: #FCA5A5; border: 1px solid rgba(229,57,53,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
-        .badge-role-samu    { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-admin       { background: rgba(139,92,246,.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-responsable  { background: rgba(229,57,53,.2);  color: #FCA5A5; border: 1px solid rgba(229,57,53,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-agent        { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
     </style>
 </head>
 <body class="dash-body">
@@ -31,12 +31,12 @@
     </a>
     <nav class="sidebar-nav">
         <div class="sidebar-label">Administration</div>
-        <a href="#" class="nav-link-dash active" onclick="afficherOnglet('dashboard')"><i class="bi bi-grid-3x3-gap"></i> Tableau de bord</a>
-        <a href="#" class="nav-link-dash" onclick="afficherOnglet('incidents')"><i class="bi bi-exclamation-triangle"></i> Incidents</a>
-        <a href="#" class="nav-link-dash" onclick="afficherOnglet('agents')"><i class="bi bi-people"></i> Personnel</a>
-        <a href="#" class="nav-link-dash" onclick="afficherOnglet('carte')"><i class="bi bi-map"></i> Carte</a>
-        <a href="#" class="nav-link-dash" onclick="afficherOnglet('structures')"><i class="bi bi-building"></i> Structures</a>
-        <a href="#" class="nav-link-dash" onclick="afficherOnglet('bilan')"><i class="bi bi-bar-chart"></i> Bilan</a>
+        <a href="#" class="nav-link-dash active" onclick="afficherOnglet(event, 'dashboard')"><i class="bi bi-grid-3x3-gap"></i> Tableau de bord</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet(event, 'incidents')"><i class="bi bi-exclamation-triangle"></i> Incidents</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet(event, 'agents')"><i class="bi bi-people"></i> Personnel</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet(event, 'carte')"><i class="bi bi-map"></i> Carte</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet(event, 'structures')"><i class="bi bi-building"></i> Structures</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet(event, 'bilan')"><i class="bi bi-bar-chart"></i> Bilan</a>
         <div class="sidebar-label">Général</div>
         <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
     </nav>
@@ -107,7 +107,7 @@
 
     <div class="page-content">
 
-        <!-- ONGLET DASHBOARD  -->
+        <!-- ═══ ONGLET DASHBOARD ═══ -->
         <div id="onglet-dashboard">
             <div class="row g-3 mb-4" id="stats-cards">
                 <div class="col-6 col-md-2">
@@ -172,7 +172,7 @@
             </div>
         </div>
 
-        <!-- ONGLET INCIDENTS -->
+        <!--ONGLET INCIDENTS -->
         <div id="onglet-incidents" style="display:none">
             <div class="card-dark overflow-hidden">
                 <div class="p-3 d-flex justify-content-between align-items-center" style="border-bottom:1px solid rgba(255,255,255,.07)">
@@ -228,3 +228,692 @@
                                         <th style="color:rgba(255,255,255,.4);font-size:.75rem">Statut</th>
                                         <th style="color:rgba(255,255,255,.4);font-size:.75rem">Action</th>
                                     </tr>
+                                </thead>
+                                <tbody id="tbody-agents">
+                                    <tr><td colspan="6" class="text-center py-4" style="color:rgba(255,255,255,.3)">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-dark p-4">
+                        <h6 class="fw-bold text-white mb-4" style="font-family:'Poppins',sans-serif">
+                            <i class="bi bi-person-plus me-2" style="color:#8B5CF6"></i>Nouveau membre du personnel
+                        </h6>
+                        <div id="msg-agent" class="rounded-3 p-2 mb-3 d-none" style="font-size:.82rem"></div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Prénom</label>
+                            <input type="text" id="a-prenom" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Prénom">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Nom</label>
+                            <input type="text" id="a-nom" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Nom de famille">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Identifiant</label>
+                            <input type="text" id="a-identifiant" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="identifiant_unique">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Mot de passe</label>
+                            <input type="password" id="a-mdp" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Min. 6 caractères">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Rôle</label>
+                            <select id="a-role" class="form-select rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem">
+                                <option value="RESPONSABLE">Responsable de structure</option>
+                                <option value="AGENT">Agent</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Structure</label>
+                            <select id="a-structure" class="form-select rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem">
+                                <option value="">— Aucune —</option>
+                            </select>
+                        </div>
+                        <button onclick="creerAgent()" class="btn-admin w-100 rounded-3">
+                            <i class="bi bi-plus-circle me-1"></i> Créer le membre
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET STRUCTURES -->
+        <div id="onglet-structures" style="display:none">
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="card-dark overflow-hidden">
+                        <div class="p-3 d-flex justify-content-between align-items-center" style="border-bottom:1px solid rgba(255,255,255,.07)">
+                            <span style="font-size:.85rem;font-weight:600"><i class="bi bi-building me-2" style="color:#8B5CF6"></i>Structures de secours</span>
+                            <span id="st-count" style="font-size:.75rem;color:rgba(255,255,255,.35)"></span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0" style="font-size:.85rem">
+                                <thead style="background:rgba(255,255,255,.04)">
+                                    <tr>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Nom / Sigle</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Type</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Responsable</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Adresse</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Tél.</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Statut</th>
+                                        <th style="color:rgba(255,255,255,.4);font-size:.75rem">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-structures">
+                                    <tr><td colspan="7" class="text-center py-4" style="color:rgba(255,255,255,.3)">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-dark p-4">
+                        <h6 class="fw-bold text-white mb-3" style="font-family:'Poppins',sans-serif" id="st-form-titre">
+                            <i class="bi bi-building-add me-2" style="color:#8B5CF6"></i>Nouvelle structure
+                        </h6>
+                        <input type="hidden" id="st-edit-id">
+                        <div id="msg-structure" class="rounded-3 p-2 mb-3 d-none" style="font-size:.82rem"></div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Nom de la structure <span style="color:#E53935">*</span></label>
+                            <input type="text" id="st-nom" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: Caserne Dakar-Plateau">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Sigle</label>
+                            <input type="text" id="st-sigle" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: SP-01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Type <span style="color:#E53935">*</span></label>
+                            <select id="st-type" class="form-select rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem">
+                                <option value="pompiers">Pompiers</option>
+                                <option value="samu">SAMU</option>
+                                <option value="police">Police</option>
+                                <option value="gendarmerie">Gendarmerie</option>
+                                <option value="marine">Marine</option>
+                                <option value="protection_civile">Protection civile</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Région</label>
+                            <input type="text" id="st-region" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: Dakar">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Adresse exacte</label>
+                            <input type="text" id="st-adresse" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: Rue 10, Plateau, Dakar">
+                        </div>
+                        <hr style="border-color:rgba(255,255,255,.08);margin:1rem 0">
+                        <div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.05em">Responsable de la structure</div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Nom complet</label>
+                            <input type="text" id="st-resp-nom" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: Colonel Mamadou Diop">
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Titre / Fonction</label>
+                            <input type="text" id="st-resp-titre" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="Ex: Chef de service, Directeur...">
+                        </div>
+                        <hr style="border-color:rgba(255,255,255,.08);margin:1rem 0">
+                        <div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.05em">Contact</div>
+                        <div class="mb-3">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Téléphone</label>
+                            <input type="text" id="st-tel" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="+221...">
+                        </div>
+                        <div class="mb-4">
+                            <label class="d-block mb-1" style="font-size:.78rem;color:rgba(255,255,255,.5)">Email</label>
+                            <input type="email" id="st-email" class="form-control rounded-3" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.88rem" placeholder="email@structure.sn">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button onclick="sauvegarderStructure()" class="btn-admin flex-fill rounded-3" id="st-btn-save">
+                                <i class="bi bi-plus-circle me-1"></i> Créer
+                            </button>
+                            <button onclick="annulerEditionStructure()" id="st-btn-cancel" class="btn btn-sm rounded-3 d-none"
+                                    style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET BILAN -->
+        <div id="onglet-bilan" style="display:none">
+            <div class="card-dark p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span style="font-size:.85rem;font-weight:600"><i class="bi bi-bar-chart me-2" style="color:#8B5CF6"></i>Bilan statistique</span>
+                    <select id="bilan-annee" class="form-select form-select-sm rounded-3" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:auto;font-size:.8rem"></select>
+                    <select id="bilan-mois" class="form-select form-select-sm rounded-3" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:auto;font-size:.8rem">
+                        <option value="">Toute l'année</option>
+                        <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+                        <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+                        <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+                        <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+                    </select>
+                    <button onclick="chargerBilan()" class="btn-admin rounded-3"><i class="bi bi-search me-1"></i>Générer</button>
+                    <button onclick="exporterCsv()" class="btn btn-sm rounded-3" style="background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25);font-size:.8rem">
+                        <i class="bi bi-download me-1"></i>Export CSV
+                    </button>
+                </div>
+            </div>
+            <div id="bilan-contenu" class="row g-3">
+                <div class="col-12 text-center py-4" style="color:rgba(255,255,255,.3)">Sélectionnez une période et cliquez sur Générer</div>
+            </div>
+        </div>
+
+        <!--ONGLET CARTE -->
+        <div id="onglet-carte" style="display:none">
+            <div class="card-dark overflow-hidden">
+                <div class="p-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
+                    <span style="font-size:.85rem;font-weight:600"><i class="bi bi-map me-2" style="color:#8B5CF6"></i>Carte globale des incidents</span>
+                </div>
+                <div id="carte-admin" style="height:560px"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="libs/leaflet/leaflet.js"></script>
+<script src="api.js"></script>
+<script>
+    // État global partagé entre les différents onglets
+    let tousIncidents = [];   // cache des incidents (utilisé par l'onglet Incidents et la Carte)
+    let carteInit = false;    // évite de recréer la carte Leaflet à chaque affichage de l'onglet
+    let tousStructures = [];  // cache des structures (utilisé par l'onglet Structures et le formulaire agent)
+    let marqueursCarte = [];  // marqueurs actuellement affichés sur la carte
+
+    // Point d'entrée : vérifie les droits admin puis initialise l'horloge et le tableau de bord
+    document.addEventListener('DOMContentLoaded', () => {
+        const utilisateur = verifierAuth('ADMIN');
+        if (!utilisateur) return;
+        document.getElementById('user-nom').textContent    = utilisateur.prenom + ' ' + utilisateur.nom;
+        document.getElementById('user-avatar').textContent = utilisateur.prenom.charAt(0).toUpperCase();
+        demarrerHorloge('horloge');
+        chargerDashboard();
+        setInterval(chargerDashboard, 15000); // rafraîchit les statistiques toutes les 15s
+
+        // Applique le thème mémorisé (clair/sombre) au chargement de la page
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('theme-light');
+            const ic = document.getElementById('theme-icon');
+            if (ic) ic.className = 'bi bi-sun-fill';
+        }
+    });
+
+    // Récupère les statistiques globales et les incidents les plus récents pour l'onglet Tableau de bord
+    async function chargerDashboard() {
+        try {
+            const data = await apiCall('/admin/tableau');
+            const s = data.statistiques;
+            document.getElementById('s-total').textContent    = s.incidents;
+            document.getElementById('s-attente').textContent  = s.en_attente;
+            document.getElementById('s-cours').textContent    = s.en_cours;
+            document.getElementById('s-termines').textContent = s.termines;
+            document.getElementById('s-jour').textContent     = s.aujourd_hui;
+            document.getElementById('s-agents').textContent   = s.agents;
+
+            document.getElementById('tbody-recents').innerHTML = data.incidents_recents.map(i => `
+                <tr>
+                    <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
+                    <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
+                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
+                    <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    // Charge la liste complète des incidents (utilisée par l'onglet Incidents et par la Carte)
+    async function chargerIncidents() {
+        try {
+            const data = await apiCall('/admin/incidents');
+            tousIncidents = data;
+            filtrerIncidents();
+        } catch(e) { console.error(e); }
+    }
+
+    // Affiche les incidents dans le tableau, en appliquant le filtre de statut sélectionné
+    function filtrerIncidents() {
+        const filtre = document.getElementById('filtre-statut').value;
+        const liste  = filtre ? tousIncidents.filter(i => i.statut === filtre) : tousIncidents;
+        document.getElementById('tbody-incidents').innerHTML = liste.length === 0
+            ? '<tr><td colspan="7" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucun incident</td></tr>'
+            : liste.map(i => `
+                <tr>
+                    <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
+                    <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
+                    <td style="color:rgba(255,255,255,.6)">${i.citoyen_nom || '—'}</td>
+                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
+                    <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
+                    <td>
+                        <a href="suivi.html?id=${i.id}" target="_blank" class="btn btn-sm rounded-2"
+                                style="background:rgba(59,130,246,.15);color:#93C5FD;border:1px solid rgba(59,130,246,.25);font-size:.72rem">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+    }
+
+    // Supprime définitivement un incident après confirmation de l'utilisateur
+    async function supprimerIncident(id) {
+        if (!confirm('Supprimer cet incident ?')) return;
+        const data = await apiCall(`/admin/incidents/${id}`, 'DELETE');
+        if (data.succes) chargerIncidents();
+    }
+
+    // Charge la liste des structures de secours et met aussi à jour le select du formulaire "nouvel agent"
+    async function chargerStructures() {
+        try {
+            const data = await apiCall('/admin/structures');
+            tousStructures = data;
+            const TYPES = { pompiers:'🚒', samu:'🏥', police:'👮', gendarmerie:'🪖', marine:'⚓', protection_civile:'🛡️', autre:'🏢' };
+            const el = document.getElementById('st-count');
+            if (el) el.textContent = data.length + ' structure(s)';
+            document.getElementById('tbody-structures').innerHTML = data.length === 0
+                ? '<tr><td colspan="7" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucune structure</td></tr>'
+                : data.map(s => `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">${s.nom}</div>
+                            ${s.sigle ? `<div style="font-size:.72rem;color:rgba(255,255,255,.35)">${s.sigle}</div>` : ''}
+                        </td>
+                        <td>${TYPES[s.type] || '🏢'} ${s.type}</td>
+                        <td>
+                            ${s.responsable_nom ? `<div style="font-size:.82rem">${s.responsable_nom}</div>` : ''}
+                            ${s.responsable_titre ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4)">${s.responsable_titre}</div>` : (!s.responsable_nom ? '<span style="color:rgba(255,255,255,.25)">—</span>' : '')}
+                        </td>
+                        <td style="color:rgba(255,255,255,.5);font-size:.8rem">${s.adresse || '—'}</td>
+                        <td style="color:rgba(255,255,255,.5)">${s.telephone || '—'}</td>
+                        <td><span style="font-size:.78rem;color:${s.actif ? '#86EFAC' : '#FCA5A5'}">${s.actif ? '● Active' : '○ Inactive'}</span></td>
+                        <td class="d-flex gap-1">
+                            <button onclick="editerStructure(${s.id})" class="btn btn-sm rounded-2"
+                                    style="background:rgba(139,92,246,.15);color:#C4B5FD;border:1px solid rgba(139,92,246,.25);font-size:.72rem" title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button onclick="toggleStructure(${s.id})" class="btn btn-sm rounded-2"
+                                    style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-size:.72rem">
+                                ${s.actif ? 'Désactiver' : 'Activer'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            // Reconstruit le select "Structure" du formulaire de création d'agent avec les données à jour
+            const sel = document.getElementById('a-structure');
+            sel.innerHTML = '<option value="">— Aucune —</option>' +
+                data.map(s => `<option value="${s.id}">${s.nom}</option>`).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    // Pré-remplit le formulaire "structure" avec les données de la structure choisie, en mode édition
+    function editerStructure(id) {
+        const s = tousStructures.find(x => x.id === id);
+        if (!s) return;
+        document.getElementById('st-edit-id').value      = s.id;
+        document.getElementById('st-nom').value          = s.nom;
+        document.getElementById('st-sigle').value        = s.sigle || '';
+        document.getElementById('st-type').value         = s.type;
+        document.getElementById('st-region').value       = s.region || '';
+        document.getElementById('st-adresse').value      = s.adresse || '';
+        document.getElementById('st-resp-nom').value     = s.responsable_nom || '';
+        document.getElementById('st-resp-titre').value   = s.responsable_titre || '';
+        document.getElementById('st-tel').value          = s.telephone || '';
+        document.getElementById('st-email').value        = s.email || '';
+        document.getElementById('st-form-titre').innerHTML =
+            '<i class="bi bi-pencil me-2" style="color:#8B5CF6"></i>Modifier : ' + s.nom;
+        document.getElementById('st-btn-save').innerHTML = '<i class="bi bi-check-circle me-1"></i> Enregistrer';
+        document.getElementById('st-btn-cancel').classList.remove('d-none');
+        document.getElementById('msg-structure').className = 'rounded-3 p-2 mb-3 d-none';
+        document.getElementById('st-nom').focus();
+    }
+
+    // Réinitialise le formulaire "structure" et repasse en mode création
+    function annulerEditionStructure() {
+        document.getElementById('st-edit-id').value = '';
+        ['st-nom','st-sigle','st-region','st-adresse','st-resp-nom','st-resp-titre','st-tel','st-email']
+            .forEach(id => document.getElementById(id).value = '');
+        document.getElementById('st-type').value = 'pompiers';
+        document.getElementById('st-form-titre').innerHTML =
+            '<i class="bi bi-building-add me-2" style="color:#8B5CF6"></i>Nouvelle structure';
+        document.getElementById('st-btn-save').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Créer';
+        document.getElementById('st-btn-cancel').classList.add('d-none');
+        document.getElementById('msg-structure').className = 'rounded-3 p-2 mb-3 d-none';
+    }
+
+    // Bascule l'état actif/inactif d'une structure de secours
+    async function toggleStructure(id) {
+        const data = await apiCall(`/admin/structures/${id}/toggle`, 'PATCH');
+        if (data.succes) chargerStructures();
+    }
+
+    // Crée une nouvelle structure ou enregistre les modifications d'une structure existante
+    async function sauvegarderStructure() {
+        const msg    = document.getElementById('msg-structure');
+        const editId = document.getElementById('st-edit-id').value;
+        const corps  = {
+            nom:               document.getElementById('st-nom').value.trim(),
+            sigle:             document.getElementById('st-sigle').value.trim(),
+            type:              document.getElementById('st-type').value,
+            region:            document.getElementById('st-region').value.trim(),
+            adresse:           document.getElementById('st-adresse').value.trim(),
+            responsable_nom:   document.getElementById('st-resp-nom').value.trim(),
+            responsable_titre: document.getElementById('st-resp-titre').value.trim(),
+            telephone:         document.getElementById('st-tel').value.trim(),
+            email:             document.getElementById('st-email').value.trim(),
+        };
+        if (!corps.nom) {
+            msg.textContent = '⚠️ Le nom est requis.';
+            msg.className = 'rounded-3 p-2 mb-3';
+            msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+            return;
+        }
+        try {
+            const endpoint = editId ? `/admin/structures/${editId}` : '/admin/structures';
+            const methode  = editId ? 'PUT' : 'POST';
+            const data = await apiCall(endpoint, methode, corps);
+            if (data.succes) {
+                msg.textContent = editId ? '✅ Structure mise à jour.' : '✅ Structure créée.';
+                msg.className = 'rounded-3 p-2 mb-3';
+                msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                annulerEditionStructure();
+                chargerStructures();
+            }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-3 p-2 mb-3';
+            msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+    // Récupère et affiche les statistiques (bilan) pour l'année/mois sélectionnés
+    async function chargerBilan() {
+        const annee  = document.getElementById('bilan-annee').value;
+        const mois   = document.getElementById('bilan-mois').value;
+        const params = mois ? `?annee=${annee}&mois=${mois}` : `?annee=${annee}`;
+        const b = await apiCall('/admin/statistiques' + params);
+        const MOIS_NOMS = ['','Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+        document.getElementById('bilan-contenu').innerHTML = `
+            <div class="col-6 col-md-3">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#E2E8F0">${b.total_incidents}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Total incidents</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#86EFAC">${b.par_statut.termine}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Terminés</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#FCA5A5">${b.victimes.total}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Victimes</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#FCD34D">${b.victimes.decede}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Décédés</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-dark p-4">
+                    <div class="fw-semibold mb-3" style="font-size:.85rem">Par type d'urgence</div>
+                    ${Object.entries(b.par_type).map(([k,v]) => `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span style="font-size:.82rem">${{incendie:'🔥 Incendie',accident:'🚗 Accident',medical:'🏥 Médical',autre:'⚠️ Autre'}[k]}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:80px;height:6px;background:rgba(255,255,255,.08);border-radius:3px">
+                                    <div style="width:${b.total_incidents ? Math.round(v/b.total_incidents*100) : 0}%;height:100%;background:#8B5CF6;border-radius:3px"></div>
+                                </div>
+                                <span class="font-monospace" style="font-size:.78rem;color:#C4B5FD">${v}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-dark p-4">
+                    <div class="fw-semibold mb-3" style="font-size:.85rem">État des victimes</div>
+                    ${[['leger','#86EFAC','Léger'],['grave','#FCD34D','Grave'],['critique','#FB923C','Critique'],['decede','#FCA5A5','Décédé'],['inconnu','#94A3B8','Inconnu']].map(([k,c,l]) => `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span style="font-size:.82rem;color:${c}">${l}</span>
+                            <span class="font-monospace" style="font-size:.82rem">${b.victimes[k]}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ${!mois ? `
+            <div class="col-12">
+                <div class="card-dark p-4">
+                    <div class="fw-semibold mb-3" style="font-size:.85rem">Incidents par mois (${annee})</div>
+                    <div class="d-flex align-items-end gap-1" style="height:80px">
+                        ${b.par_mois.map(m => {
+                            const max = Math.max(...b.par_mois.map(x => x.total), 1);
+                            const h = Math.round(m.total / max * 100);
+                            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+                                <span style="font-size:.65rem;color:#C4B5FD">${m.total || ''}</span>
+                                <div style="width:100%;height:${h}%;background:#8B5CF6;border-radius:2px 2px 0 0;min-height:${m.total?'4px':'0'}"></div>
+                                <span style="font-size:.65rem;color:rgba(255,255,255,.3)">${MOIS_NOMS[m.mois]}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>` : ''}
+        `;
+    }
+
+    // Déclenche le téléchargement du bilan annuel au format CSV, en réutilisant l'origine actuelle de l'app
+    function exporterCsv() {
+        const annee = document.getElementById('bilan-annee').value;
+        const a = document.createElement('a');
+        a.href = `${window.location.origin}/api/admin/export-csv?annee=${annee}&token=${localStorage.getItem('token')}`;
+        a.download = `bilan_urgences_${annee}.csv`;
+        a.click();
+    }
+
+    // Charge la liste du personnel (agents et responsables) pour l'onglet Personnel
+    async function chargerAgents() {
+        try {
+            const data = await apiCall('/admin/responsables');
+            document.getElementById('tbody-agents').innerHTML = data.length === 0
+                ? '<tr><td colspan="6" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucun membre du personnel</td></tr>'
+                : data.map(a => `
+                <tr>
+                    <td class="fw-semibold">${a.prenom} ${a.nom}</td>
+                    <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${a.identifiant}</td>
+                    <td><span class="badge-role-${a.role.toLowerCase()}">${a.role}</span></td>
+                    <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? a.structure.nom : '—'}</td>
+                    <td>
+                        <span style="font-size:.78rem;color:${a.actif ? '#86EFAC' : '#FCA5A5'}">
+                            ${a.actif ? '● Actif' : '○ Inactif'}
+                        </span>
+                    </td>
+                    <td>
+                        <button onclick="toggleAgent(${a.id})" class="btn btn-sm rounded-2"
+                                style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-size:.72rem">
+                            ${a.actif ? 'Désactiver' : 'Activer'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    // Bascule l'état actif/inactif d'un membre du personnel
+    async function toggleAgent(id) {
+        const data = await apiCall(`/admin/utilisateurs/${id}/toggle`, 'PATCH');
+        if (data.succes) chargerAgents();
+    }
+
+    // Valide le formulaire puis crée un agent ou un responsable selon le rôle choisi
+    async function creerAgent() {
+        const msg = document.getElementById('msg-agent');
+        msg.className = 'rounded-3 p-2 mb-3 d-none';
+
+        const role = document.getElementById('a-role').value;
+        const corps = {
+            prenom:       document.getElementById('a-prenom').value.trim(),
+            nom:          document.getElementById('a-nom').value.trim(),
+            identifiant:  document.getElementById('a-identifiant').value.trim(),
+            mot_de_passe: document.getElementById('a-mdp').value,
+            structure_id: document.getElementById('a-structure').value || null,
+        };
+
+        if (!corps.prenom || !corps.nom || !corps.identifiant || !corps.mot_de_passe) {
+            msg.textContent = '⚠️ Tous les champs sont requis.';
+            msg.className = 'rounded-3 p-2 mb-3';
+            msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+            return;
+        }
+
+        try {
+            const endpoint = role === 'AGENT' ? '/admin/agents' : '/admin/responsables';
+            const data = await apiCall(endpoint, 'POST', corps);
+            if (data.succes) {
+                msg.textContent = `✅ ${role === 'AGENT' ? 'Agent' : 'Responsable'} créé avec succès.`;
+                msg.className = 'rounded-3 p-2 mb-3';
+                msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                ['a-prenom','a-nom','a-identifiant','a-mdp'].forEach(id => document.getElementById(id).value = '');
+                chargerAgents();
+            } else {
+                throw new Error(data.message || 'Erreur');
+            }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-3 p-2 mb-3';
+            msg.style.cssText = 'background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+    // Bascule l'onglet actif dans le tableau de bord et charge les données propres à cet onglet.
+    // L'événement du clic est reçu en paramètre plutôt que lu depuis une variable globale.
+    async function afficherOnglet(evenement, nom) {
+        ['dashboard','incidents','agents','structures','bilan','carte'].forEach(n => {
+            document.getElementById('onglet-' + n).style.display = n === nom ? '' : 'none';
+        });
+        document.querySelectorAll('.nav-link-dash').forEach(l => l.classList.remove('active'));
+        evenement.currentTarget.classList.add('active');
+
+        if (nom === 'incidents')  chargerIncidents();
+        if (nom === 'agents')      chargerAgents();
+        if (nom === 'structures')  chargerStructures();
+        if (nom === 'bilan')       {
+            const sel = document.getElementById('bilan-annee');
+            if (!sel.options.length) {
+                const annee = new Date().getFullYear();
+                for (let y = annee; y >= annee - 4; y--) sel.add(new Option(y, y));
+            }
+        }
+        if (nom === 'carte' && !carteInit) {
+            // La carte a besoin des incidents : on les charge s'ils ne sont pas déjà en mémoire
+            if (tousIncidents.length === 0) await chargerIncidents();
+            initialiserCarte();
+        }
+    }
+
+    // Crée la carte Leaflet et place un marqueur pour chaque incident géolocalisé
+    function initialiserCarte() {
+        carteInit = true;
+        const carte = L.map('carte-admin').setView([14.6937, -17.4441], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carte);
+        const couleurs = { incendie:'#E53935', accident:'#F59E0B', medical:'#3B82F6', autre:'#6B7280' };
+        marqueursCarte.forEach(m => m.remove());
+        marqueursCarte = [];
+        tousIncidents.forEach(i => {
+            if (!i.latitude || !i.longitude) return;
+            const m = L.circleMarker([i.latitude, i.longitude], {
+                radius: 10, color: '#fff', weight: 2,
+                fillColor: couleurs[i.type_urgence] || '#6B7280', fillOpacity: 1
+            }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${i.adresse || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
+            marqueursCarte.push(m);
+        });
+    }
+
+    // Affiche/masque le mini-formulaire de modification du nom, et le pré-remplit avec les valeurs actuelles
+    function toggleIdForm() {
+        const f = document.getElementById('id-form');
+        const visible = f.style.display !== 'none';
+        f.style.display = visible ? 'none' : 'block';
+        document.getElementById('id-btn-label').textContent = visible ? 'Modifier mon nom' : 'Annuler';
+        if (!visible) {
+            const u = JSON.parse(localStorage.getItem('utilisateur') || '{}');
+            document.getElementById('id-prenom').value = u.prenom || '';
+            document.getElementById('id-nom').value    = u.nom    || '';
+        }
+        document.getElementById('id-msg').className = 'rounded-2 p-2 mb-2 d-none';
+    }
+
+    // Envoie le nouveau prénom/nom au serveur et met à jour l'affichage + le stockage local
+    async function changerIdentite() {
+        const msg    = document.getElementById('id-msg');
+        const prenom = document.getElementById('id-prenom').value.trim();
+        const nom    = document.getElementById('id-nom').value.trim();
+        if (!prenom || !nom) return;
+        try {
+            const data = await apiCall('/profil/identite', 'PATCH', { prenom, nom });
+            if (data.succes) {
+                localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
+                document.getElementById('user-nom').textContent    = data.utilisateur.prenom + ' ' + data.utilisateur.nom;
+                document.getElementById('user-avatar').textContent = data.utilisateur.prenom.charAt(0).toUpperCase();
+                msg.textContent = '✅ Nom mis à jour.';
+                msg.className = 'rounded-2 p-2 mb-2';
+                msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                setTimeout(toggleIdForm, 2000);
+            } else { throw new Error(data.message); }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-2 p-2 mb-2';
+            msg.style.cssText = 'font-size:.75rem;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+    // Bascule entre thème sombre et thème clair, et mémorise le choix pour les prochaines visites
+    function toggleTheme() {
+        const light = document.body.classList.toggle('theme-light');
+        localStorage.setItem('theme', light ? 'light' : 'dark');
+        document.getElementById('theme-icon').className = light ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+
+    // Affiche/masque le mini-formulaire de changement de mot de passe
+    function toggleMdpForm() {
+        const f = document.getElementById('mdp-form');
+        const visible = f.style.display !== 'none';
+        f.style.display = visible ? 'none' : 'block';
+        document.getElementById('mdp-btn-label').textContent = visible ? 'Changer le mot de passe' : 'Annuler';
+        document.getElementById('mdp-msg').className = 'rounded-2 p-2 mb-2 d-none';
+    }
+
+    // Envoie l'ancien et le nouveau mot de passe au serveur pour mise à jour du compte
+    async function changerMotDePasse() {
+        const msg     = document.getElementById('mdp-msg');
+        const ancien  = document.getElementById('mdp-ancien').value;
+        const nouveau = document.getElementById('mdp-nouveau').value;
+        if (!ancien || !nouveau) return;
+        try {
+            const data = await apiCall('/profil/password', 'PATCH', { ancien, nouveau });
+            if (data.succes) {
+                msg.textContent = '✅ Mot de passe modifié.';
+                msg.className = 'rounded-2 p-2 mb-2';
+                msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                document.getElementById('mdp-ancien').value = '';
+                document.getElementById('mdp-nouveau').value = '';
+                setTimeout(toggleMdpForm, 2000);
+            } else {
+                throw new Error(data.message);
+            }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-2 p-2 mb-2';
+            msg.style.cssText = 'font-size:.75rem;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+</script>
+</body>
+</html>
