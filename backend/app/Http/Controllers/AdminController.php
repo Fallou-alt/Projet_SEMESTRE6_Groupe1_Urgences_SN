@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+    // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
     public function tableau()
     {
         return response()->json([
@@ -49,7 +50,8 @@ class AdminController extends Controller
 
         $structure = Structure::create($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
 
         return response()->json(['succes' => true, 'structure' => $structure], 201);
@@ -59,8 +61,7 @@ class AdminController extends Controller
     {
         $structure = Structure::findOrFail($id);
 
-        // Correction : on valide désormais les champs modifiables,
-        // comme c'est déjà le cas à la création.
+        // Le type de structure doit rester une des valeurs autorisées
         $request->validate([
             'nom'  => 'sometimes|required|string',
             'type' => 'sometimes|required|in:pompiers,samu,police,gendarmerie,marine,protection_civile,autre',
@@ -68,13 +69,15 @@ class AdminController extends Controller
 
         $structure->update($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
         return response()->json(['succes' => true, 'structure' => $structure]);
     }
 
     public function supprimerStructure($id)
     {
+        // TODO: vérifier qu'il n'y a pas d'incidents actifs avant de supprimer
         Structure::findOrFail($id)->delete();
         return response()->json(['succes' => true]);
     }
@@ -86,10 +89,11 @@ class AdminController extends Controller
         return response()->json(['succes' => true, 'actif' => $structure->actif]);
     }
 
+    // Liste tout le personnel (responsables + agents)
     public function listeResponsables()
     {
         return response()->json(
-            User::where('role', 'RESPONSABLE')
+            User::whereIn('role', ['RESPONSABLE', 'AGENT'])
                 ->with('structure:id,nom,sigle')
                 ->select('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id', 'created_at')
                 ->get()
@@ -103,20 +107,22 @@ class AdminController extends Controller
             'mot_de_passe' => 'required|min:6',
             'nom'          => 'required',
             'prenom'       => 'required',
-            'structure_id' => 'required|exists:structures,id',
+            'structure_id' => 'nullable|exists:structures,id',
         ]);
 
-        $structure = Structure::findOrFail($request->structure_id);
-        if ($structure->responsable_id) {
-            return response()->json([
-                'succes'  => false,
-                'message' => 'Cette structure a déjà un responsable assigné.',
-            ], 422);
+        // Une structure ne peut avoir qu'un seul responsable à la fois
+        if ($request->structure_id) {
+            $structure = Structure::findOrFail($request->structure_id);
+            if ($structure->responsable_id) {
+                return response()->json([
+                    'succes'  => false,
+                    'message' => 'Cette structure a déjà un responsable assigné.',
+                ], 422);
+            }
         }
 
-        // Correction : transaction pour éviter un état incohérent
-        // (utilisateur créé mais structure non mise à jour, ou inversement).
-        $utilisateur = DB::transaction(function () use ($request, $structure) {
+        // Création du compte et rattachement à la structure dans une même transaction
+        $utilisateur = DB::transaction(function () use ($request) {
             $utilisateur = User::create([
                 'identifiant'  => $request->identifiant,
                 'mot_de_passe' => Hash::make($request->mot_de_passe),
@@ -126,7 +132,10 @@ class AdminController extends Controller
                 'structure_id' => $request->structure_id,
             ]);
 
-            $structure->update(['responsable_id' => $utilisateur->id]);
+            if ($request->structure_id) {
+                Structure::where('id', $request->structure_id)
+                    ->update(['responsable_id' => $utilisateur->id]);
+            }
 
             return $utilisateur;
         });
@@ -134,6 +143,31 @@ class AdminController extends Controller
         return response()->json([
             'succes'      => true,
             'responsable' => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+        ], 201);
+    }
+
+    public function creerAgent(Request $request)
+    {
+        $request->validate([
+            'identifiant'  => 'required|unique:users',
+            'mot_de_passe' => 'required|min:6',
+            'nom'          => 'required',
+            'prenom'       => 'required',
+            'structure_id' => 'nullable|exists:structures,id',
+        ]);
+
+        $utilisateur = User::create([
+            'identifiant'  => $request->identifiant,
+            'mot_de_passe' => Hash::make($request->mot_de_passe),
+            'nom'          => $request->nom,
+            'prenom'       => $request->prenom,
+            'role'         => 'AGENT',
+            'structure_id' => $request->structure_id,
+        ]);
+
+        return response()->json([
+            'succes' => true,
+            'agent'  => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
         ], 201);
     }
 
@@ -154,7 +188,7 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
-        // Correction : validation légère des paramètres de la requête.
+        // L'année est obligatoirement sur 4 chiffres, le mois entre 1 et 12
         $request->validate([
             'annee' => 'sometimes|integer|digits:4',
             'mois'  => 'sometimes|integer|between:1,12',
@@ -190,6 +224,7 @@ class AdminController extends Controller
                 'TERMINE'    => $incidents->where('statut', 'TERMINE')->count(),
                 'ANNULE'     => $incidents->where('statut', 'ANNULE')->count(),
             ],
+            // Répartition du nombre d'incidents sur les 12 mois de l'année sélectionnée
             'par_mois' => collect(range(1, 12))->map(fn($m) => [
                 'mois'  => $m,
                 'total' => $incidents->filter(
@@ -207,6 +242,7 @@ class AdminController extends Controller
         ]);
     }
 
+    // Export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
         $annee     = $request->get('annee', date('Y'));
@@ -224,9 +260,6 @@ class AdminController extends Controller
                 $incident->statut,
                 '"' . $this->champCsvSecurise($incident->adresse) . '"',
                 '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
-                // Correction : le téléphone (souvent préfixé par "+") passe
-                // désormais aussi par champCsvSecurise() pour éviter une
-                // injection de formule CSV dans Excel/LibreOffice.
                 '"' . $this->champCsvSecurise($incident->citoyen_telephone) . '"',
                 $incident->created_at,
                 '"' . $this->champCsvSecurise($structure) . '"',
@@ -239,6 +272,11 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Prépare une valeur pour l'export CSV : échappe les guillemets et
+     * neutralise les caractères de début de formule (=, +, -, @) afin
+     * qu'un tableur comme Excel n'interprète jamais le contenu comme une formule.
+     */
     private function champCsvSecurise(?string $valeur): string
     {
         $valeur = $valeur ?? '';
