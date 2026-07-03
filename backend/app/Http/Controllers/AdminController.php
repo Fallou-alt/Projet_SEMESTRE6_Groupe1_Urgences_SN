@@ -7,6 +7,7 @@ use App\Models\Structure;
 use App\Models\User;
 use App\Models\Victime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -57,6 +58,14 @@ class AdminController extends Controller
     public function modifierStructure(Request $request, $id)
     {
         $structure = Structure::findOrFail($id);
+
+        // Correction : on valide désormais les champs modifiables,
+        // comme c'est déjà le cas à la création.
+        $request->validate([
+            'nom'  => 'sometimes|required|string',
+            'type' => 'sometimes|required|in:pompiers,samu,police,gendarmerie,marine,protection_civile,autre',
+        ]);
+
         $structure->update($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
             'commune', 'adresse', 'telephone', 'email'
@@ -105,16 +114,22 @@ class AdminController extends Controller
             ], 422);
         }
 
-        $utilisateur = User::create([
-            'identifiant'  => $request->identifiant,
-            'mot_de_passe' => Hash::make($request->mot_de_passe),
-            'nom'          => $request->nom,
-            'prenom'       => $request->prenom,
-            'role'         => 'RESPONSABLE',
-            'structure_id' => $request->structure_id,
-        ]);
+        // Correction : transaction pour éviter un état incohérent
+        // (utilisateur créé mais structure non mise à jour, ou inversement).
+        $utilisateur = DB::transaction(function () use ($request, $structure) {
+            $utilisateur = User::create([
+                'identifiant'  => $request->identifiant,
+                'mot_de_passe' => Hash::make($request->mot_de_passe),
+                'nom'          => $request->nom,
+                'prenom'       => $request->prenom,
+                'role'         => 'RESPONSABLE',
+                'structure_id' => $request->structure_id,
+            ]);
 
-        $structure->update(['responsable_id' => $utilisateur->id]);
+            $structure->update(['responsable_id' => $utilisateur->id]);
+
+            return $utilisateur;
+        });
 
         return response()->json([
             'succes'      => true,
@@ -139,6 +154,12 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
+        // Correction : validation légère des paramètres de la requête.
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+            'mois'  => 'sometimes|integer|between:1,12',
+        ]);
+
         $annee   = $request->get('annee', date('Y'));
         $mois    = $request->get('mois');
         $requete = Incident::whereYear('created_at', $annee);
@@ -203,7 +224,10 @@ class AdminController extends Controller
                 $incident->statut,
                 '"' . $this->champCsvSecurise($incident->adresse) . '"',
                 '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
-                $incident->citoyen_telephone ?? '',
+                // Correction : le téléphone (souvent préfixé par "+") passe
+                // désormais aussi par champCsvSecurise() pour éviter une
+                // injection de formule CSV dans Excel/LibreOffice.
+                '"' . $this->champCsvSecurise($incident->citoyen_telephone) . '"',
                 $incident->created_at,
                 '"' . $this->champCsvSecurise($structure) . '"',
             ]) . "\n";
@@ -214,6 +238,7 @@ class AdminController extends Controller
             'Content-Disposition' => "attachment; filename=bilan_urgences_{$annee}.csv",
         ]);
     }
+
     private function champCsvSecurise(?string $valeur): string
     {
         $valeur = $valeur ?? '';
