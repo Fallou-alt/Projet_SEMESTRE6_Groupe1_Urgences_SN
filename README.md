@@ -1,4 +1,4 @@
-# Urgences SN — Plateforme nationale de gestion des urgences
+# Urgences SN : Plateforme nationale de gestion des urgences
 
 Projet de fin de licence en Informatique de Gestion.
 
