@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 
 class ResponsableController extends Controller
 {
+    // petit helper pour récupérer l'id de la structure du responsable connecté
     private function structureId(Request $request): int
     {
         return $request->get('_user')->structure_id;
@@ -56,6 +57,7 @@ class ResponsableController extends Controller
         return response()->json(['succes' => true, 'structure' => $structure]);
     }
 
+    // liste des agents de la structure du responsable connecté
     public function listeAgents(Request $request)
     {
         return response()->json(
@@ -92,6 +94,7 @@ class ResponsableController extends Controller
 
     public function modifierAgent(Request $request, $id)
     {
+        // s'assurer que l'agent appartient bien à cette structure
         $agent = User::where('role', 'AGENT')
             ->where('structure_id', $this->structureId($request))
             ->findOrFail($id);
@@ -125,15 +128,17 @@ class ResponsableController extends Controller
         return response()->json(['succes' => true]);
     }
 
+    // incidents de la structure avec agents affectés et victimes (pour l'historique aussi)
     public function listeIncidents(Request $request)
     {
         return response()->json(
             Incident::where('structure_id', $this->structureId($request))
-                ->with('agent:id,nom,prenom')
+                ->with(['agent:id,nom,prenom', 'agents:users.id,users.nom,users.prenom', 'victimes'])
                 ->latest()->get()
         );
     }
 
+    // affecter un agent principal à un incident (change le statut en AFFECTE)
     public function affecterAgent(Request $request, $id)
     {
         $request->validate([
@@ -218,6 +223,7 @@ class ResponsableController extends Controller
     {
         $victime = Victime::findOrFail($id);
 
+        // vérifier que la victime appartient à un incident de cette structure
         Incident::where('structure_id', $this->structureId($request))
             ->findOrFail($victime->incident_id);
 
@@ -225,6 +231,30 @@ class ResponsableController extends Controller
         return response()->json(['succes' => true]);
     }
 
+    // gestion de l'équipe affectée à un incident (plusieurs agents possibles)
+    public function listeAgentsIncident(Request $request, $incidentId)
+    {
+        $incident = Incident::where('structure_id', $this->structureId($request))->findOrFail($incidentId);
+        return response()->json($incident->agents);
+    }
+
+    public function ajouterAgentIncident(Request $request, $incidentId)
+    {
+        $request->validate(['agent_id' => 'required|exists:users,id']);
+        $incident = Incident::where('structure_id', $this->structureId($request))->findOrFail($incidentId);
+        // syncWithoutDetaching pour éviter les doublons
+        $incident->agents()->syncWithoutDetaching([$request->agent_id]);
+        return response()->json(['succes' => true]);
+    }
+
+    public function retirerAgentIncident(Request $request, $incidentId, $agentId)
+    {
+        $incident = Incident::where('structure_id', $this->structureId($request))->findOrFail($incidentId);
+        $incident->agents()->detach($agentId);
+        return response()->json(['succes' => true]);
+    }
+
+    // rapport statistique de la structure (utilisé pour le bilan mensuel/annuel)
     public function rapport(Request $request)
     {
         $structureId = $this->structureId($request);

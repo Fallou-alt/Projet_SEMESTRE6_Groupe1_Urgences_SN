@@ -84,6 +84,9 @@
             🚑 Espace Agent
         </h1>
         <div class="d-flex align-items-center gap-3">
+            <span style="font-size:.78rem;color:rgba(255,255,255,.45)">Missions :</span>
+            <span id="badge-missions" class="badge rounded-pill"
+                  style="background:rgba(34,197,94,.2);color:#86EFAC;border:1px solid rgba(34,197,94,.3);font-size:.78rem">0</span>
             <button onclick="chargerMissions()" class="btn btn-sm btn-outline-secondary rounded-3" style="font-size:.78rem">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
@@ -223,6 +226,7 @@
             nbPrecedent = missions.length;
 
             document.getElementById('nb-missions').textContent = missions.length;
+            document.getElementById('badge-missions').textContent = missions.length;
 
             const liste = document.getElementById('liste-missions');
             if (missions.length === 0) {

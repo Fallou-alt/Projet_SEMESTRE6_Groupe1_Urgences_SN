@@ -9,13 +9,18 @@ use Illuminate\Http\Request;
 
 class IncidentController extends Controller
 {
+    /**
+     * Déclaration d'un incident par un citoyen (sans authentification)
+     * On essaie d'affecter automatiquement à la bonne structure selon le type
+     */
     public function declarer(Request $request)
     {
         $request->validate([
             'type_urgence' => 'required|in:incendie,accident,medical,autre',
         ]);
 
-        // Affecter automatiquement à la structure appropriée
+        // selon le type on cherche la structure adaptée
+        // TODO: améliorer ça pour prendre en compte la région du citoyen
         $typeStructure = match($request->type_urgence) {
             'medical'  => 'samu',
             'incendie' => 'pompiers',
@@ -42,6 +47,7 @@ class IncidentController extends Controller
         return response()->json(['succes' => true, 'id' => $incident->id], 201);
     }
 
+    // suivi public d'un incident par son ID (page citoyen)
     public function suivi($id)
     {
         $incident = Incident::findOrFail($id);
@@ -56,6 +62,7 @@ class IncidentController extends Controller
         ]);
     }
 
+    // stats affichées sur la page d'accueil publique
     public function statistiquesPubliques()
     {
         return response()->json([

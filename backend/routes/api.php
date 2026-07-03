@@ -64,6 +64,10 @@ Route::middleware(AuthToken::class . ':RESPONSABLE')->prefix('responsable')->gro
     Route::post('/incidents/{id}/victimes',     [ResponsableController::class, 'ajouterVictime']);
     Route::delete('/victimes/{id}',             [ResponsableController::class, 'supprimerVictime']);
 
+    Route::get('/incidents/{id}/agents',        [ResponsableController::class, 'listeAgentsIncident']);
+    Route::post('/incidents/{id}/agents',       [ResponsableController::class, 'ajouterAgentIncident']);
+    Route::delete('/incidents/{id}/agents/{agentId}', [ResponsableController::class, 'retirerAgentIncident']);
+
     Route::get('/rapport',                      [ResponsableController::class, 'rapport']);
 });
 

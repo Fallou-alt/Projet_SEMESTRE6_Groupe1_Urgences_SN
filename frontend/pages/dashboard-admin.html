@@ -14,9 +14,9 @@
         .nav-link-dash.active { background: rgba(139,92,246,.14); border-left: 3px solid #8B5CF6; color: #fff; }
         .btn-admin { background: #8B5CF6; border: none; color: #fff; border-radius: 8px; padding: 8px 16px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .2s; }
         .btn-admin:hover { background: #7C3AED; }
-        .badge-role-admin   { background: rgba(139,92,246,.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
-        .badge-role-pompier { background: rgba(229,57,53,.2);  color: #FCA5A5; border: 1px solid rgba(229,57,53,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
-        .badge-role-samu    { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-admin       { background: rgba(139,92,246,.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-responsable  { background: rgba(229,57,53,.2);  color: #FCA5A5; border: 1px solid rgba(229,57,53,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
+        .badge-role-agent        { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
     </style>
 </head>
 <body class="dash-body">
@@ -421,6 +421,7 @@
     let tousIncidents = [];
     let carteInit = false;
     let tousStructures = [];
+    let marqueursCarte = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         const utilisateur = verifierAuth('ADMIN');
@@ -704,7 +705,7 @@
                 <tr>
                     <td class="fw-semibold">${a.prenom} ${a.nom}</td>
                     <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${a.identifiant}</td>
-                    <td><span class="badge-role-${a.role}">${a.role}</span></td>
+                    <td><span class="badge-role-${a.role.toLowerCase()}">${a.role}</span></td>
                     <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? a.structure.nom : '—'}</td>
                     <td>
                         <span style="font-size:.78rem;color:${a.actif ? '#86EFAC' : '#FCA5A5'}">
@@ -791,12 +792,15 @@
         const carte = L.map('carte-admin').setView([14.6937, -17.4441], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carte);
         const couleurs = { incendie:'#E53935', accident:'#F59E0B', medical:'#3B82F6', autre:'#6B7280' };
+        marqueursCarte.forEach(m => m.remove());
+        marqueursCarte = [];
         tousIncidents.forEach(i => {
             if (!i.latitude || !i.longitude) return;
-            L.circleMarker([i.latitude, i.longitude], {
+            const m = L.circleMarker([i.latitude, i.longitude], {
                 radius: 10, color: '#fff', weight: 2,
                 fillColor: couleurs[i.type_urgence] || '#6B7280', fillOpacity: 1
             }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${i.adresse || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
+            marqueursCarte.push(m);
         });
     }
 

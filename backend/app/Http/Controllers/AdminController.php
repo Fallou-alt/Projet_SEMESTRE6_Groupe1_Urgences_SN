@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+    // données du tableau de bord admin (stats globales + incidents récents)
     public function tableau()
     {
         return response()->json([
@@ -48,7 +49,8 @@ class AdminController extends Controller
 
         $structure = Structure::create($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
 
         return response()->json(['succes' => true, 'structure' => $structure], 201);
@@ -59,13 +61,15 @@ class AdminController extends Controller
         $structure = Structure::findOrFail($id);
         $structure->update($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
         return response()->json(['succes' => true, 'structure' => $structure]);
     }
 
     public function supprimerStructure($id)
     {
+        // TODO: vérifier qu'il n'y a pas d'incidents actifs avant de supprimer
         Structure::findOrFail($id)->delete();
         return response()->json(['succes' => true]);
     }
@@ -77,6 +81,7 @@ class AdminController extends Controller
         return response()->json(['succes' => true, 'actif' => $structure->actif]);
     }
 
+    // liste tout le personnel (responsables + agents)
     public function listeResponsables()
     {
         return response()->json(
@@ -94,7 +99,7 @@ class AdminController extends Controller
             'mot_de_passe' => 'required|min:6',
             'nom'          => 'required',
             'prenom'       => 'required',
-            'structure_id' => 'required|exists:structures,id',
+            'structure_id' => 'nullable|exists:structures,id',
         ]);
 
         $utilisateur = User::create([
@@ -106,8 +111,11 @@ class AdminController extends Controller
             'structure_id' => $request->structure_id,
         ]);
 
-        Structure::where('id', $request->structure_id)
-            ->update(['responsable_id' => $utilisateur->id]);
+        // lier le responsable à sa structure
+        if ($request->structure_id) {
+            Structure::where('id', $request->structure_id)
+                ->update(['responsable_id' => $utilisateur->id]);
+        }
 
         return response()->json([
             'succes'      => true,
@@ -157,9 +165,9 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
-        $mois      = $request->get('mois');
-        $requete   = Incident::whereYear('created_at', $annee);
+        $annee   = $request->get('annee', date('Y'));
+        $mois    = $request->get('mois');
+        $requete = Incident::whereYear('created_at', $annee);
 
         if ($mois) {
             $requete->whereMonth('created_at', $mois);
@@ -204,6 +212,7 @@ class AdminController extends Controller
         ]);
     }
 
+    // export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
         $annee     = $request->get('annee', date('Y'));
