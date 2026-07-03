@@ -15,12 +15,12 @@ class AuthToken
      */
     public function handle(Request $request, Closure $next, string $role = null)
     {
-        // le token peut venir du header Authorization ou en query param (pour l'export CSV)
+        // on accepte le token soit dans le header Bearer soit en query param (pour l'export CSV)
         $token = $request->bearerToken() ?? $request->query('token');
         $user  = $token ? User::where('token', $token)->where('actif', true)->first() : null;
 
         if (!$user) {
-            return response()->json(['message' => 'Non authentifié.'], 401);
+            return response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401);
         }
 
         // l'admin a accès à tout, pas besoin de vérifier le rôle
