@@ -4,8 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle Incident.
+ * Représente une urgence déclarée par un citoyen.
+ */
 class Incident extends Model
 {
+    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+    public const STATUT_EN_COURS   = 'EN_COURS';
+    public const STATUT_TERMINE    = 'TERMINE';
+    public const STATUT_ANNULE     = 'ANNULE';
+
     protected $fillable = [
         'type_urgence', 'latitude', 'longitude', 'adresse', 'description',
         'citoyen_nom', 'citoyen_telephone', 'statut', 'commentaire',
