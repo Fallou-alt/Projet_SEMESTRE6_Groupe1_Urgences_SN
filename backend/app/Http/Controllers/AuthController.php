@@ -21,14 +21,14 @@ class AuthController extends Controller
 
         // vérifier que le compte existe et que le mdp est bon
         if (!$utilisateur || !Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe)) {
-            return response()->json(['message' => 'Identifiant ou mot de passe incorrect.'], 401);
+            return response()->json(['message' => 'Identifiant ou mot de passe incorrect. Vérifiez vos informations.'], 401);
         }
 
         if (!$utilisateur->actif) {
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
-        // je génère un token simple, pas besoin de JWT pour ce projet
+        // je génère un token aléatoire de 60 caractères, suffisant pour ce projet
         $token = Str::random(60);
         $utilisateur->update(['token' => $token]);
 
