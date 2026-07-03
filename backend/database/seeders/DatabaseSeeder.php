@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+ * Exécute l'insertion des données initiales
+ * nécessaires au fonctionnement et aux tests de l'application.
+ */
     public function run(): void
     {
         // ─── Admin plateforme ─────────────────────────────────────────────────
