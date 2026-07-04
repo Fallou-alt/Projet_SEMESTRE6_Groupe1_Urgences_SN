@@ -10,6 +10,9 @@ class Structure extends Model
         'nom', 'sigle', 'type', 'region', 'departement', 'commune',
         'adresse', 'telephone', 'email', 'responsable_id', 'actif',
     ];
+    /**
+ * Retourne le responsable associé à cette structure.
+ */
 
     public function responsable()
     {
