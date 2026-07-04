@@ -78,4 +78,7 @@ Route::middleware(AuthToken::class . ':AGENT')->prefix('agent')->group(function 
     Route::get('/historique',                   [AgentController::class, 'historique']);
     Route::patch('/missions/{id}/statut',       [AgentController::class, 'changerStatut']);
     Route::patch('/missions/{id}/commentaire',  [AgentController::class, 'ajouterCommentaire']);
+    Route::get('/missions/{id}/victimes',       [AgentController::class, 'listeVictimes']);
+    Route::post('/missions/{id}/victimes',      [AgentController::class, 'ajouterVictime']);
+    Route::delete('/victimes/{id}',             [AgentController::class, 'supprimerVictime']);
 });
