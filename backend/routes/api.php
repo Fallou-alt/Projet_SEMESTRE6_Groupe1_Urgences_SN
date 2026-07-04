@@ -14,7 +14,8 @@ Route::get('/incidents/{id}/suivi',  [IncidentController::class, 'suivi']);
 Route::get('/stats',                 [IncidentController::class, 'statistiquesPubliques']);
 
 // Authentification
-Route::post('/connexion', [AuthController::class, 'connexion']);
+Route::post('/connexion',  [AuthController::class, 'connexion']);
+// TODO: ajouter une route d'inscription pour les citoyens qui veulent suivre leurs incidents
 
 Route::middleware(AuthToken::class)->group(function () {
     Route::post('/deconnexion',       [AuthController::class, 'deconnexion']);
@@ -34,7 +35,6 @@ Route::middleware(AuthToken::class . ':ADMIN')->prefix('admin')->group(function 
 
     Route::get('/responsables',                 [AdminController::class, 'listeResponsables']);
     Route::post('/responsables',                [AdminController::class, 'creerResponsable']);
-    Route::post('/agents',                      [AdminController::class, 'creerAgent']);
     Route::patch('/utilisateurs/{id}/toggle',   [AdminController::class, 'toggleUtilisateur']);
 
     Route::get('/incidents',                    [AdminController::class, 'listeIncidents']);
@@ -57,16 +57,11 @@ Route::middleware(AuthToken::class . ':RESPONSABLE')->prefix('responsable')->gro
 
     Route::get('/incidents',                    [ResponsableController::class, 'listeIncidents']);
     Route::patch('/incidents/{id}/affecter',    [ResponsableController::class, 'affecterAgent']);
-    Route::patch('/incidents/{id}/statut',      [ResponsableController::class, 'changerStatut']);
     Route::patch('/incidents/{id}/annuler',     [ResponsableController::class, 'annulerIncident']);
 
     Route::get('/incidents/{id}/victimes',      [ResponsableController::class, 'listeVictimes']);
     Route::post('/incidents/{id}/victimes',     [ResponsableController::class, 'ajouterVictime']);
     Route::delete('/victimes/{id}',             [ResponsableController::class, 'supprimerVictime']);
-
-    Route::get('/incidents/{id}/agents',        [ResponsableController::class, 'listeAgentsIncident']);
-    Route::post('/incidents/{id}/agents',       [ResponsableController::class, 'ajouterAgentIncident']);
-    Route::delete('/incidents/{id}/agents/{agentId}', [ResponsableController::class, 'retirerAgentIncident']);
 
     Route::get('/rapport',                      [ResponsableController::class, 'rapport']);
 });
@@ -78,7 +73,4 @@ Route::middleware(AuthToken::class . ':AGENT')->prefix('agent')->group(function 
     Route::get('/historique',                   [AgentController::class, 'historique']);
     Route::patch('/missions/{id}/statut',       [AgentController::class, 'changerStatut']);
     Route::patch('/missions/{id}/commentaire',  [AgentController::class, 'ajouterCommentaire']);
-    Route::get('/missions/{id}/victimes',       [AgentController::class, 'listeVictimes']);
-    Route::post('/missions/{id}/victimes',      [AgentController::class, 'ajouterVictime']);
-    Route::delete('/victimes/{id}',             [AgentController::class, 'supprimerVictime']);
 });
