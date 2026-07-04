@@ -9,15 +9,19 @@ class Cors
 {
     public function handle(Request $request, Closure $next)
     {
-        $response = $next($request);
+        // si c'est une requête OPTIONS (preflight), on répond directement sans passer par les routes
+        if ($request->isMethod('OPTIONS')) {
+            return response()->json('OK', 200, [
+                'Access-Control-Allow-Origin'  => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization, Accept',
+            ]);
+        }
 
+        $response = $next($request);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-
-        if ($request->isMethod('OPTIONS')) {
-            $response->setStatusCode(200);
-        }
 
         return $response;
     }

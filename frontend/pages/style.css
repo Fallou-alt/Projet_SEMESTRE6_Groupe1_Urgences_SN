@@ -125,7 +125,7 @@ h1, h2, h3, h4, h5, .font-poppins {
 .hero-section {
     min-height: 100vh;
     background:
-        linear-gradient(135deg, rgba(229,57,53,.82) 0%, rgba(183,28,28,.75) 40%, rgba(13,17,23,.92) 100%),
+        linear-gradient(135deg, rgba(229,57,53,.55) 0%, rgba(183,28,28,.50) 40%, rgba(13,17,23,.88) 100%),
         url('images/arriere.jpeg') center/cover no-repeat;
     display: flex;
     align-items: center;

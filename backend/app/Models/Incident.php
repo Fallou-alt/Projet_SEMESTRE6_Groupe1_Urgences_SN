@@ -22,6 +22,12 @@ class Incident extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
+    public function agents()
+    {
+        return $this->belongsToMany(User::class, 'incident_agents', 'incident_id', 'user_id')
+                    ->select('users.id', 'users.nom', 'users.prenom', 'users.identifiant');
+    }
+
     public function victimes()
     {
         return $this->hasMany(Victime::class);

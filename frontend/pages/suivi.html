@@ -219,34 +219,35 @@
 <script src="api.js"></script>
 <script>
     const ETAPES = [
-        { statut: 'en_attente',     label: 'Alerte reçue',         sub: 'Votre signalement a été enregistré',       icon: 'bi-check-lg' },
-        { statut: 'pris_en_charge', label: 'Prise en charge',      sub: 'Les secours ont pris en charge l\'alerte', icon: 'bi-person-check' },
-        { statut: 'en_route',       label: 'Secours en route',     sub: 'Une équipe se dirige vers vous',           icon: 'bi-truck' },
-        { statut: 'sur_place',      label: 'Secours sur place',    sub: 'L\'équipe est arrivée sur les lieux',      icon: 'bi-geo-alt-fill' },
-        { statut: 'termine',        label: 'Intervention terminée',sub: 'L\'intervention est clôturée',             icon: 'bi-shield-check' },
+        { statut: 'EN_ATTENTE', label: 'Alerte reçue',         sub: 'Votre signalement a été enregistré',       icon: 'bi-check-lg' },
+        { statut: 'AFFECTE',   label: 'Prise en charge',      sub: 'Les secours ont pris en charge l\'alerte', icon: 'bi-person-check' },
+        { statut: 'EN_ROUTE',  label: 'Secours en route',     sub: 'Une équipe se dirige vers vous',           icon: 'bi-truck' },
+        { statut: 'SUR_PLACE', label: 'Secours sur place',    sub: 'L\'équipe est arrivée sur les lieux',      icon: 'bi-geo-alt-fill' },
+        { statut: 'TERMINE',   label: 'Intervention terminée',sub: 'L\'intervention est clôturée',             icon: 'bi-shield-check' },
     ];
 
     const ORDRE = ETAPES.map(e => e.statut);
 
     const MESSAGES = {
-        en_attente:     { bg: '#FFFBEB', border: '#FDE68A', color: '#92400E', icon: '⏳', texte: 'Votre alerte est en attente de prise en charge. Les secours ont été notifiés.' },
-        pris_en_charge: { bg: '#EFF6FF', border: '#BFDBFE', color: '#1E40AF', icon: '📋', texte: 'Votre urgence a été prise en charge. Une équipe est en cours de mobilisation.' },
-        en_route:       { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', icon: '🚒', texte: 'Les secours sont en route vers votre position. Restez visible et accessible.' },
-        sur_place:      { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', icon: '✅', texte: 'Les secours sont sur place. Suivez leurs instructions.' },
-        termine:        { bg: '#F9FAFB', border: '#E5E7EB', color: '#374151', icon: '🏁', texte: 'L\'intervention est terminée. Nous espérons que tout va bien.' },
+        EN_ATTENTE: { bg: '#FFFBEB', border: '#FDE68A', color: '#92400E', icon: '⏳', texte: 'Votre alerte est en attente de prise en charge. Les secours ont été notifiés.' },
+        AFFECTE:    { bg: '#EFF6FF', border: '#BFDBFE', color: '#1E40AF', icon: '📋', texte: 'Votre urgence a été prise en charge. Une équipe est en cours de mobilisation.' },
+        EN_ROUTE:   { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', icon: '🚒', texte: 'Les secours sont en route vers votre position. Restez visible et accessible.' },
+        SUR_PLACE:  { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', icon: '✅', texte: 'Les secours sont sur place. Suivez leurs instructions.' },
+        TERMINE:    { bg: '#F9FAFB', border: '#E5E7EB', color: '#374151', icon: '🏁', texte: 'L\'intervention est terminée. Nous espérons que tout va bien.' },
     };
 
     const STATUT_LABELS = {
-        en_attente: 'En attente', pris_en_charge: 'Pris en charge',
-        en_route: 'En route', sur_place: 'Sur place', termine: 'Terminé'
+        EN_ATTENTE: 'En attente', AFFECTE: 'Affecté',
+        EN_ROUTE: 'En route', SUR_PLACE: 'Sur place', TERMINE: 'Terminé', ANNULE: 'Annulé'
     };
 
     const STATUT_COLORS = {
-        en_attente:     { bg: 'rgba(239,68,68,.1)',   color: '#DC2626',  border: 'rgba(239,68,68,.25)' },
-        pris_en_charge: { bg: 'rgba(245,158,11,.1)',  color: '#D97706',  border: 'rgba(245,158,11,.25)' },
-        en_route:       { bg: 'rgba(59,130,246,.1)',  color: '#2563EB',  border: 'rgba(59,130,246,.25)' },
-        sur_place:      { bg: 'rgba(139,92,246,.1)',  color: '#7C3AED',  border: 'rgba(139,92,246,.25)' },
-        termine:        { bg: 'rgba(34,197,94,.1)',   color: '#16A34A',  border: 'rgba(34,197,94,.25)' },
+        EN_ATTENTE: { bg: 'rgba(239,68,68,.1)',   color: '#DC2626',  border: 'rgba(239,68,68,.25)' },
+        AFFECTE:    { bg: 'rgba(245,158,11,.1)',  color: '#D97706',  border: 'rgba(245,158,11,.25)' },
+        EN_ROUTE:   { bg: 'rgba(59,130,246,.1)',  color: '#2563EB',  border: 'rgba(59,130,246,.25)' },
+        SUR_PLACE:  { bg: 'rgba(139,92,246,.1)',  color: '#7C3AED',  border: 'rgba(139,92,246,.25)' },
+        TERMINE:    { bg: 'rgba(34,197,94,.1)',   color: '#16A34A',  border: 'rgba(34,197,94,.25)' },
+        ANNULE:     { bg: 'rgba(107,114,128,.1)', color: '#6B7280',  border: 'rgba(107,114,128,.25)' },
     };
 
     // Récupérer l'ID depuis l'URL
@@ -286,7 +287,7 @@
             document.getElementById('incident-id').textContent   = '#' + data.id;
             document.getElementById('incident-type').textContent = data.type_urgence;
             document.getElementById('incident-emoji').textContent = EMOJIS[data.type_urgence] || '⚠️';
-            document.getElementById('incident-date').textContent  = new Date(data.created_at).toLocaleString('fr-FR', {
+            document.getElementById('incident-date').textContent  = new Date(data.cree_le).toLocaleString('fr-FR', {
                 day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit'
             });
 

@@ -1,5 +1,6 @@
 const API_URL = 'http://localhost:8000/api';
 
+// récupérer le token stocké après connexion
 function getToken() {
     return localStorage.getItem('token') || '';
 }
@@ -8,6 +9,7 @@ function getUtilisateur() {
     return JSON.parse(localStorage.getItem('utilisateur') || 'null');
 }
 
+// headers communs à tous les appels API
 function entetes() {
     return {
         'Content-Type': 'application/json',
@@ -16,10 +18,12 @@ function entetes() {
     };
 }
 
+// fonction générique pour les appels fetch
 async function apiCall(endpoint, methode = 'GET', corps = null) {
     const options = { method: methode, headers: entetes() };
     if (corps) options.body = JSON.stringify(corps);
     const reponse = await fetch(API_URL + endpoint, options);
+    // TODO: gérer les erreurs réseau proprement (timeout, offline...)
     return reponse.json();
 }
 
@@ -29,6 +33,7 @@ function verifierAuth(roleAttendu = null) {
         window.location.href = 'login.html';
         return null;
     }
+    // l'admin peut accéder à n'importe quel dashboard
     if (roleAttendu && utilisateur.role !== roleAttendu && utilisateur.role !== 'ADMIN') {
         window.location.href = 'login.html';
         return null;
@@ -52,6 +57,25 @@ const STATUTS_LABELS = {
     TERMINE    : 'Terminé',
     ANNULE     : 'Annulé'
 };
+
+const STATUT_SUIVANT = {
+    EN_ATTENTE : 'AFFECTE',
+    AFFECTE    : 'EN_ROUTE',
+    EN_ROUTE   : 'SUR_PLACE',
+    SUR_PLACE  : 'TERMINE',
+    TERMINE    : null,
+    ANNULE     : null
+};
+
+// Alias pour compatibilité dashboards
+function requireAuth(role) {
+    const utilisateur = getUtilisateur();
+    if (!utilisateur || !getToken()) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return utilisateur;
+}
 
 const EMOJIS = {
     incendie : '🔥',

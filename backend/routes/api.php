@@ -14,7 +14,8 @@ Route::get('/incidents/{id}/suivi',  [IncidentController::class, 'suivi']);
 Route::get('/stats',                 [IncidentController::class, 'statistiquesPubliques']);
 
 // Authentification
-Route::post('/connexion', [AuthController::class, 'connexion']);
+Route::post('/connexion',  [AuthController::class, 'connexion']);
+// TODO: ajouter une route d'inscription pour les citoyens qui veulent suivre leurs incidents
 
 Route::middleware(AuthToken::class)->group(function () {
     Route::post('/deconnexion',       [AuthController::class, 'deconnexion']);

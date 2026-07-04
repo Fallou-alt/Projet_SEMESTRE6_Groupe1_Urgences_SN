@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
     // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
+    // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
     public function tableau()
     {
         return response()->json([
@@ -107,38 +108,20 @@ class AdminController extends Controller
             'mot_de_passe' => 'required|min:6',
             'nom'          => 'required',
             'prenom'       => 'required',
-            'structure_id' => 'nullable|exists:structures,id',
+            'structure_id' => 'required|exists:structures,id',
         ]);
 
-        // Une structure ne peut avoir qu'un seul responsable à la fois
-        if ($request->structure_id) {
-            $structure = Structure::findOrFail($request->structure_id);
-            if ($structure->responsable_id) {
-                return response()->json([
-                    'succes'  => false,
-                    'message' => 'Cette structure a déjà un responsable assigné.',
-                ], 422);
-            }
-        }
+        $utilisateur = User::create([
+            'identifiant'  => $request->identifiant,
+            'mot_de_passe' => Hash::make($request->mot_de_passe),
+            'nom'          => $request->nom,
+            'prenom'       => $request->prenom,
+            'role'         => 'RESPONSABLE',
+            'structure_id' => $request->structure_id,
+        ]);
 
-        // Création du compte et rattachement à la structure dans une même transaction
-        $utilisateur = DB::transaction(function () use ($request) {
-            $utilisateur = User::create([
-                'identifiant'  => $request->identifiant,
-                'mot_de_passe' => Hash::make($request->mot_de_passe),
-                'nom'          => $request->nom,
-                'prenom'       => $request->prenom,
-                'role'         => 'RESPONSABLE',
-                'structure_id' => $request->structure_id,
-            ]);
-
-            if ($request->structure_id) {
-                Structure::where('id', $request->structure_id)
-                    ->update(['responsable_id' => $utilisateur->id]);
-            }
-
-            return $utilisateur;
-        });
+        Structure::where('id', $request->structure_id)
+            ->update(['responsable_id' => $utilisateur->id]);
 
         return response()->json([
             'succes'      => true,
@@ -245,7 +228,14 @@ class AdminController extends Controller
     // Export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
+        // Validation ajoutée : "annee" était auparavant utilisée sans contrôle,
+        // à la fois dans la requête SQL et dans l'en-tête Content-Disposition
+        // (risque d'injection dans le nom de fichier téléchargé).
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+        ]);
+
+        $annee     = (int) $request->get('annee', date('Y'));
         $incidents = Incident::whereYear('created_at', $annee)
             ->with(['agent', 'structure'])
             ->latest()->get();

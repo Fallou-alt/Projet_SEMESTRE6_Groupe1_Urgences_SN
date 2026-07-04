@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Agent | Urgences SN</title>
+    <link rel="stylesheet" href="libs/fonts/fonts.css">
+    <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="libs/leaflet/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #0B0F1A; color: #E2E8F0; }
+        .nav-link-dash.active { background: rgba(34,197,94,.14); border-left: 3px solid #22C55E; color: #fff; }
+        .btn-agent { background: #22C55E; border: none; color: #fff; border-radius: 8px; padding: 10px 16px; font-size: .85rem; font-weight: 600; cursor: pointer; width: 100%; transition: background .2s; }
+        .btn-agent:hover { background: #16A34A; }
+    </style>
+</head>
+<body class="dash-body">
+
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">
+        <div class="sidebar-logo-icon"><i class="bi bi-fire text-white" style="font-size:1rem"></i></div>
+        <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.95rem;color:#fff">
+            Urgences <span style="color:#E53935">SN</span>
+        </span>
+    </a>
+    <nav class="sidebar-nav">
+        <div class="sidebar-label">Menu</div>
+        <a href="#" class="nav-link-dash active" onclick="afficherOnglet('missions')"><i class="bi bi-lightning"></i> Mes missions</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history"></i> Historique</a>
+        <div class="sidebar-label">Général</div>
+        <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="user-avatar" id="user-avatar">A</div>
+            <div style="min-width:0;flex:1">
+                <div class="text-white fw-semibold text-truncate" style="font-size:.82rem" id="user-nom">Chargement...</div>
+                <div style="font-size:.68rem;color:rgba(255,255,255,.4)">Agent</div>
+            </div>
+        </div>
+        <div id="id-form" style="display:none;margin-bottom:.75rem">
+            <div id="id-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
+            <input type="text" id="id-prenom" placeholder="Prénom" class="form-control form-control-sm rounded-3 mb-2"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.78rem">
+            <input type="text" id="id-nom" placeholder="Nom" class="form-control form-control-sm rounded-3 mb-2"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.78rem">
+            <button onclick="changerIdentite()" class="btn btn-sm w-100 rounded-3 mb-1"
+                    style="background:#22C55E;color:#fff;border:none;font-size:.78rem;font-weight:600">
+                <i class="bi bi-check-circle me-1"></i> Confirmer
+            </button>
+        </div>
+        <button onclick="toggleIdForm()" class="btn btn-outline-secondary btn-sm w-100 rounded-3 mb-2" style="font-size:.78rem">
+            <i class="bi bi-person-gear me-1"></i> <span id="id-btn-label">Modifier mon nom</span>
+        </button>
+        <div id="mdp-form" style="display:none;margin-bottom:.75rem">
+            <div id="mdp-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
+            <input type="password" id="mdp-ancien" placeholder="Ancien mot de passe" class="form-control form-control-sm rounded-3 mb-2"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.78rem">
+            <input type="password" id="mdp-nouveau" placeholder="Nouveau (min. 6 caractères)" class="form-control form-control-sm rounded-3 mb-2"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.78rem">
+            <button onclick="changerMotDePasse()" class="btn btn-sm w-100 rounded-3 mb-1"
+                    style="background:#22C55E;color:#fff;border:none;font-size:.78rem;font-weight:600">
+                <i class="bi bi-check-circle me-1"></i> Confirmer
+            </button>
+        </div>
+        <button onclick="toggleMdpForm()" class="btn btn-outline-secondary btn-sm w-100 rounded-3 mb-2" style="font-size:.78rem">
+            <i class="bi bi-key me-1"></i> <span id="mdp-btn-label">Changer le mot de passe</span>
+        </button>
+        <button onclick="deconnecter()" class="btn btn-outline-secondary btn-sm w-100 rounded-3" style="font-size:.78rem">
+            <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="topbar">
+        <button class="btn btn-sm btn-outline-secondary d-md-none me-2 rounded-2"
+                onclick="document.getElementById('sidebar').classList.toggle('open')">
+            <i class="bi bi-list"></i>
+        </button>
+        <h1 style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;color:#fff;margin:0">
+            🚑 Espace Agent
+        </h1>
+        <div class="d-flex align-items-center gap-3">
+            <span style="font-size:.78rem;color:rgba(255,255,255,.45)">Missions :</span>
+            <span id="badge-missions" class="badge rounded-pill"
+                  style="background:rgba(34,197,94,.2);color:#86EFAC;border:1px solid rgba(34,197,94,.3);font-size:.78rem">0</span>
+            <button onclick="chargerMissions()" class="btn btn-sm btn-outline-secondary rounded-3" style="font-size:.78rem">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button onclick="toggleTheme()" class="btn-theme" id="btn-theme">
+                <i class="bi bi-moon-fill" id="theme-icon"></i>
+            </button>
+            <span class="font-monospace text-white-50" style="font-size:.78rem" id="horloge"></span>
+        </div>
+    </div>
+
+    <div class="page-content">
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-4">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#FCD34D" id="stat-cours">0</div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.4)">En cours</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#86EFAC" id="stat-termines">0</div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.4)">Terminées</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#E2E8F0" id="stat-total">0</div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.4)">Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet missions actives -->
+        <div id="onglet-missions">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card-dark p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span style="font-size:.8rem;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em">Missions actives</span>
+                            <span id="nb-missions" class="badge rounded-pill" style="background:rgba(34,197,94,.15);color:#86EFAC;font-size:.72rem">0</span>
+                        </div>
+                        <div id="liste-missions" class="d-flex flex-column gap-2" style="max-height:520px;overflow-y:auto">
+                            <div class="text-center py-4" style="color:rgba(255,255,255,.3)">
+                                <div class="spinner-border spinner-border-sm mb-2"></div><br>Chargement...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="detail-panel" id="detail-panel">
+                        <div class="text-center py-5" style="color:rgba(255,255,255,.25)">
+                            <i class="bi bi-cursor fs-1 d-block mb-3 opacity-25"></i>
+                            <p class="mb-0" style="font-size:.9rem">Sélectionnez une mission pour voir les détails</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet historique -->
+        <div id="onglet-historique" style="display:none">
+            <div class="card-dark overflow-hidden">
+                <div class="p-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
+                    <span style="font-size:.85rem;font-weight:600"><i class="bi bi-clock-history me-2" style="color:#22C55E"></i>Historique des missions</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0" style="font-size:.85rem">
+                        <thead style="background:rgba(255,255,255,.04)">
+                            <tr>
+                                <th style="color:rgba(255,255,255,.4);font-size:.75rem">#</th>
+                                <th style="color:rgba(255,255,255,.4);font-size:.75rem">Type</th>
+                                <th style="color:rgba(255,255,255,.4);font-size:.75rem">Adresse</th>
+                                <th style="color:rgba(255,255,255,.4);font-size:.75rem">Commentaire</th>
+                                <th style="color:rgba(255,255,255,.4);font-size:.75rem">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-historique">
+                            <tr><td colspan="5" class="text-center py-4" style="color:rgba(255,255,255,.3)">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Popup notification -->
+<div class="notif-popup" id="notif-popup">
+    <div class="d-flex align-items-start gap-3">
+        <span style="font-size:1.4rem">🚨</span>
+        <div>
+            <div class="fw-bold text-white notif-titre" style="font-size:.88rem">Nouvelle mission !</div>
+            <div class="notif-texte" style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:2px"></div>
+        </div>
+        <button onclick="document.getElementById('notif-popup').style.display='none'"
+                style="background:none;border:none;color:rgba(255,255,255,.4);margin-left:auto;cursor:pointer;font-size:1rem">✕</button>
+    </div>
+</div>
+
+<script src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="libs/leaflet/leaflet.js"></script>
+<script src="api.js"></script>
+<script>
+    let missionsData = [];
+    let selectedId   = null;
+    let nbPrecedent  = -1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = verifierAuth('AGENT');
+        if (user) {
+            document.getElementById('user-nom').textContent    = user.prenom + ' ' + user.nom;
+            document.getElementById('user-avatar').textContent = user.prenom.charAt(0).toUpperCase();
+        }
+        demarrerHorloge('horloge');
+        chargerMissions();
+        setInterval(chargerMissions, 10000);
+    });
+
+    async function chargerMissions() {
+        try {
+            const data = await apiCall('/agent/tableau');
+            const s = data.statistiques;
+            document.getElementById('stat-cours').textContent    = s.en_cours;
+            document.getElementById('stat-termines').textContent = s.termines;
+            document.getElementById('stat-total').textContent    = s.total;
+
+            const missions = await apiCall('/agent/missions');
+            missionsData = missions;
+
+            if (missions.length > nbPrecedent && nbPrecedent >= 0) {
+                afficherNotif('Nouvelle mission !', 'Une nouvelle mission vous a été assignée.');
+                jouerSonAlerte();
+            }
+            nbPrecedent = missions.length;
+
+            document.getElementById('nb-missions').textContent = missions.length;
+            document.getElementById('badge-missions').textContent = missions.length;
+
+            const liste = document.getElementById('liste-missions');
+            if (missions.length === 0) {
+                liste.innerHTML = '<div class="text-center py-5" style="color:rgba(255,255,255,.3)"><i class="bi bi-check-circle fs-1 d-block mb-2 opacity-25"></i>Aucune mission en cours</div>';
+            } else {
+                liste.innerHTML = missions.map(m => `
+                    <div class="incident-row ${m.id === selectedId ? 'selected' : ''}"
+                         onclick="selectMission(${m.id})" data-id="${m.id}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="font-size:1.1rem">${EMOJIS[m.type_urgence] || '⚠️'}</span>
+                                <span class="fw-semibold" style="font-size:.85rem">${m.type_urgence}</span>
+                            </div>
+                            <span class="badge-${m.statut}">${STATUTS_LABELS[m.statut] || m.statut}</span>
+                        </div>
+                        ${m.adresse ? `<div style="font-size:.75rem;color:rgba(255,255,255,.4)"><i class="bi bi-geo-alt me-1"></i>${m.adresse}</div>` : ''}
+                        <div style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:2px">
+                            <i class="bi bi-clock me-1"></i>${new Date(m.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · #${m.id}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+        if (selectedId) selectMission(selectedId);
+        } catch(e) { console.error(e); }
+    }
+
+    async function chargerHistorique() {
+        try {
+            const data = await apiCall('/agent/historique');
+            document.getElementById('tbody-historique').innerHTML = data.length === 0
+                ? '<tr><td colspan="5" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucun historique</td></tr>'
+                : data.map(m => `
+                    <tr>
+                        <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${m.id}</td>
+                        <td>${EMOJIS[m.type_urgence] || '⚠️'} ${m.type_urgence}</td>
+                        <td style="color:rgba(255,255,255,.5)">${m.adresse || '—'}</td>
+                        <td style="color:rgba(255,255,255,.4);font-size:.8rem">${m.commentaire || '—'}</td>
+                        <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(m.created_at).toLocaleString('fr-FR')}</td>
+                    </tr>
+                `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    function selectMission(id) {
+        const m = missionsData.find(x => x.id === id);
+        if (!m) return;
+        selectedId = id;
+
+        document.querySelectorAll('.incident-row').forEach(r => r.classList.remove('selected'));
+        const row = document.querySelector(`.incident-row[data-id="${id}"]`);
+        if (row) row.classList.add('selected');
+
+        const STATUTS_AGENT = { AFFECTE: 'EN_ROUTE', EN_ROUTE: 'SUR_PLACE', SUR_PLACE: 'TERMINE' };
+        const suivant = STATUTS_AGENT[m.statut];
+
+        document.getElementById('detail-panel').innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.5rem">${EMOJIS[m.type_urgence] || '⚠️'}</span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-white" style="font-family:'Poppins',sans-serif">Mission #${m.id}</h5>
+                        <small style="color:rgba(255,255,255,.4)">${new Date(m.created_at).toLocaleString('fr-FR')}</small>
+                    </div>
+                </div>
+                <span class="badge-${m.statut}">${STATUTS_LABELS[m.statut]}</span>
+            </div>
+
+            <!-- Sous-onglets -->
+            <ul class="nav nav-tabs-dark mb-3" style="margin-bottom:12px!important">
+                <li class="nav-item"><button class="nav-link active" id="stab-info" onclick="sousOngletAgent('info')"><i class="bi bi-info-circle me-1"></i>Infos</button></li>
+                <li class="nav-item"><button class="nav-link" id="stab-victimes" onclick="sousOngletAgent('victimes')"><i class="bi bi-people me-1"></i>Victimes</button></li>
+            </ul>
+
+            <!-- Infos -->
+            <div id="sous-info-agent">
+                ${m.adresse ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">📍 Adresse</div><div class="text-white fw-medium" style="font-size:.85rem">${m.adresse}</div></div>` : ''}
+                ${m.latitude ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">🌐 GPS</div><div class="font-monospace" style="font-size:.8rem;color:#93C5FD">${m.latitude}, ${m.longitude}</div></div>` : ''}
+                ${m.description ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">📝 Description</div><div style="font-size:.83rem;color:rgba(255,255,255,.75)">${m.description}</div></div>` : ''}
+                ${m.citoyen_nom ? `<div class="mb-2 p-2 rounded-3" style="background:rgba(255,255,255,.04)"><div style="font-size:.7rem;color:rgba(255,255,255,.4)">👤 Citoyen</div><div class="fw-semibold text-white" style="font-size:.85rem">${m.citoyen_nom}${m.citoyen_telephone ? ' · <span style="color:#93C5FD">'+m.citoyen_telephone+'</span>' : ''}</div></div>` : ''}
+                ${suivant
+                    ? `<button onclick="changerStatut(${m.id},'${suivant}')" class="btn-agent rounded-3 mt-2">
+                           <i class="bi bi-chevron-right me-1"></i> Passer à : ${STATUTS_LABELS[suivant]}
+                       </button>`
+                    : ''
+                }
+                <div class="mt-3 p-3 rounded-3" style="background:rgba(255,255,255,.04)">
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:8px">💬 Commentaire</div>
+                    <textarea id="commentaire-input" rows="2" class="form-control rounded-3 mb-2"
+                              style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.82rem;resize:none"
+                              placeholder="Observations, notes de terrain...">${m.commentaire || ''}</textarea>
+                    <button onclick="sauvegarderCommentaire(${m.id})" class="btn btn-sm rounded-3 fw-semibold"
+                            style="background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25);font-size:.8rem">
+                        <i class="bi bi-check me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Victimes -->
+            <div id="sous-victimes-agent" style="display:none">
+                <div id="liste-victimes-agent" class="mb-3"></div>
+                <div class="p-3 rounded-3" style="background:#0F172A;border:1px solid #1E293B">
+                    <div style="font-size:.75rem;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Enregistrer une victime</div>
+                    <div class="row g-2">
+                        <div class="col-6"><input type="text" id="va-nom" placeholder="Nom *" class="form-control form-control-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem"></div>
+                        <div class="col-6"><input type="text" id="va-prenom" placeholder="Prénom *" class="form-control form-control-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem"></div>
+                        <div class="col-4"><input type="number" id="va-age" placeholder="Âge" class="form-control form-control-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem"></div>
+                        <div class="col-4">
+                            <select id="va-sexe" class="form-select form-select-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem">
+                                <option value="inconnu">Sexe</option>
+                                <option value="homme">Homme</option>
+                                <option value="femme">Femme</option>
+                            </select>
+                        </div>
+                        <div class="col-4"><input type="text" id="va-tel" placeholder="Tél." class="form-control form-control-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem"></div>
+                        <div class="col-12">
+                            <select id="va-etat" class="form-select form-select-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem">
+                                <option value="">État *</option>
+                                <option value="leger">🟢 Léger</option>
+                                <option value="grave">🟠 Grave</option>
+                                <option value="critique">🔴 Critique</option>
+                                <option value="decede">⚫ Décédé</option>
+                                <option value="inconnu">⚪ Inconnu</option>
+                            </select>
+                        </div>
+                        <div class="col-12"><textarea id="va-obs" placeholder="Observations" rows="2" class="form-control form-control-sm" style="background:#1E293B;border:1px solid #334155;color:#F1F5F9;font-size:.82rem;resize:none"></textarea></div>
+                        <div class="col-12">
+                            <button onclick="ajouterVictimeAgent(${m.id})" class="btn btn-sm w-100 fw-semibold rounded-3" style="background:#22C55E;border:none;color:#fff;font-size:.82rem">
+                                <i class="bi bi-person-plus me-1"></i> Enregistrer la victime
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        chargerVictimesAgent(m.id);
+    }
+
+    function sousOngletAgent(nom) {
+        document.getElementById('sous-info-agent').style.display     = nom === 'info'     ? '' : 'none';
+        document.getElementById('sous-victimes-agent').style.display = nom === 'victimes' ? '' : 'none';
+        document.getElementById('stab-info').classList.toggle('active',     nom === 'info');
+        document.getElementById('stab-victimes').classList.toggle('active', nom === 'victimes');
+    }
+
+    async function chargerVictimesAgent(incidentId) {
+        try {
+            const victimes = await apiCall(`/agent/missions/${incidentId}/victimes`);
+            const el = document.getElementById('liste-victimes-agent');
+            if (!el) return;
+            if (!victimes.length) {
+                el.innerHTML = '<div style="font-size:.78rem;color:rgba(255,255,255,.3);text-align:center;padding:8px">Aucune victime enregistrée</div>';
+                return;
+            }
+            const ETAT_COLORS = { leger:'#86EFAC', grave:'#FCD34D', critique:'#FCA5A5', decede:'#9CA3AF', inconnu:'rgba(255,255,255,.4)' };
+            el.innerHTML = victimes.map(v => `
+                <div class="d-flex justify-content-between align-items-center p-2 rounded-3 mb-1" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">
+                    <div>
+                        <span class="fw-semibold text-white" style="font-size:.82rem">${v.prenom} ${v.nom}</span>
+                        ${v.age ? `<span style="font-size:.75rem;color:rgba(255,255,255,.4)"> · ${v.age} ans</span>` : ''}
+                        <div style="font-size:.72rem;color:${ETAT_COLORS[v.etat] || 'rgba(255,255,255,.4)'}">${v.etat.charAt(0).toUpperCase()+v.etat.slice(1)}</div>
+                    </div>
+                    <button onclick="supprimerVictimeAgent(${v.id},${incidentId})" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.85rem"><i class="bi bi-trash"></i></button>
+                </div>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    async function ajouterVictimeAgent(incidentId) {
+        const nom    = document.getElementById('va-nom').value.trim();
+        const prenom = document.getElementById('va-prenom').value.trim();
+        const etat   = document.getElementById('va-etat').value;
+        if (!nom || !prenom || !etat) return;
+        try {
+            await apiCall(`/agent/missions/${incidentId}/victimes`, 'POST', {
+                nom, prenom, etat,
+                age:          document.getElementById('va-age').value || null,
+                sexe:         document.getElementById('va-sexe').value,
+                telephone:    document.getElementById('va-tel').value || null,
+                observations: document.getElementById('va-obs').value || null,
+            });
+            ['va-nom','va-prenom','va-age','va-tel','va-obs'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('va-etat').value = '';
+            document.getElementById('va-sexe').value = 'inconnu';
+            chargerVictimesAgent(incidentId);
+        } catch(e) { console.error(e); }
+    }
+
+    async function supprimerVictimeAgent(victimeId, incidentId) {
+        if (!confirm('Supprimer cette victime ?')) return;
+        await apiCall(`/agent/victimes/${victimeId}`, 'DELETE');
+        chargerVictimesAgent(incidentId);
+    }
+
+    async function changerStatut(id, statut) {
+        try {
+            const commentaire = document.getElementById('commentaire-input')?.value || '';
+            const corps = { statut };
+            if (statut === 'TERMINE' && commentaire) corps.commentaire = commentaire;
+            const data = await apiCall(`/agent/missions/${id}/statut`, 'PATCH', corps);
+            if (data.succes) setTimeout(chargerMissions, 300);
+        } catch(e) { console.error(e); }
+    }
+
+    async function sauvegarderCommentaire(id) {
+        const commentaire = document.getElementById('commentaire-input')?.value?.trim();
+        if (!commentaire) return;
+        try {
+            await apiCall(`/agent/missions/${id}/commentaire`, 'PATCH', { commentaire });
+        } catch(e) { console.error(e); }
+    }
+
+    function afficherOnglet(nom) {
+        document.getElementById('onglet-missions').style.display   = nom === 'missions'   ? '' : 'none';
+        document.getElementById('onglet-historique').style.display = nom === 'historique' ? '' : 'none';
+        document.querySelectorAll('.nav-link-dash').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        if (nom === 'historique') chargerHistorique();
+    }
+
+    function toggleIdForm() {
+        const f = document.getElementById('id-form');
+        const visible = f.style.display !== 'none';
+        f.style.display = visible ? 'none' : 'block';
+        document.getElementById('id-btn-label').textContent = visible ? 'Modifier mon nom' : 'Annuler';
+        if (!visible) {
+            const u = JSON.parse(localStorage.getItem('utilisateur') || '{}');
+            document.getElementById('id-prenom').value = u.prenom || '';
+            document.getElementById('id-nom').value    = u.nom    || '';
+        }
+        document.getElementById('id-msg').className = 'rounded-2 p-2 mb-2 d-none';
+    }
+
+    async function changerIdentite() {
+        const msg    = document.getElementById('id-msg');
+        const prenom = document.getElementById('id-prenom').value.trim();
+        const nom    = document.getElementById('id-nom').value.trim();
+        if (!prenom || !nom) return;
+        try {
+            const data = await apiCall('/profil/identite', 'PATCH', { prenom, nom });
+            if (data.succes) {
+                localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
+                document.getElementById('user-nom').textContent    = data.utilisateur.prenom + ' ' + data.utilisateur.nom;
+                document.getElementById('user-avatar').textContent = data.utilisateur.prenom.charAt(0).toUpperCase();
+                msg.textContent = '✅ Nom mis à jour.';
+                msg.className = 'rounded-2 p-2 mb-2';
+                msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                setTimeout(toggleIdForm, 2000);
+            } else { throw new Error(data.message); }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-2 p-2 mb-2';
+            msg.style.cssText = 'font-size:.75rem;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+    function toggleMdpForm() {
+        const f = document.getElementById('mdp-form');
+        const visible = f.style.display !== 'none';
+        f.style.display = visible ? 'none' : 'block';
+        document.getElementById('mdp-btn-label').textContent = visible ? 'Changer le mot de passe' : 'Annuler';
+        document.getElementById('mdp-msg').className = 'rounded-2 p-2 mb-2 d-none';
+    }
+
+    async function changerMotDePasse() {
+        const msg     = document.getElementById('mdp-msg');
+        const ancien  = document.getElementById('mdp-ancien').value;
+        const nouveau = document.getElementById('mdp-nouveau').value;
+        if (!ancien || !nouveau) return;
+        try {
+            const data = await apiCall('/profil/password', 'PATCH', { ancien, nouveau });
+            if (data.succes) {
+                msg.textContent = '✅ Mot de passe modifié.';
+                msg.className = 'rounded-2 p-2 mb-2';
+                msg.style.cssText = 'font-size:.75rem;background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                document.getElementById('mdp-ancien').value = '';
+                document.getElementById('mdp-nouveau').value = '';
+                setTimeout(toggleMdpForm, 2000);
+            } else { throw new Error(data.message); }
+        } catch(e) {
+            msg.textContent = '❌ ' + e.message;
+            msg.className = 'rounded-2 p-2 mb-2';
+            msg.style.cssText = 'font-size:.75rem;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
+        }
+    }
+
+    function toggleTheme() {
+        const light = document.body.classList.toggle('theme-light');
+        localStorage.setItem('theme', light ? 'light' : 'dark');
+        document.getElementById('theme-icon').className = light ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('theme-light');
+        document.addEventListener('DOMContentLoaded', () => {
+            const ic = document.getElementById('theme-icon');
+            if (ic) ic.className = 'bi bi-sun-fill';
+        });
+    }
+</script>
+</body>
+</html>
