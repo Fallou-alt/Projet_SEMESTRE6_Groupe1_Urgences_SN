@@ -44,26 +44,31 @@ Route::middleware(AuthToken::class . ':ADMIN')->prefix('admin')->group(function 
 
 // Espace responsable de structure
 Route::middleware(AuthToken::class . ':RESPONSABLE')->prefix('responsable')->group(function () {
-    Route::get('/tableau',                      [ResponsableController::class, 'tableau']);
+    Route::get('/tableau',                                      [ResponsableController::class, 'tableau']);
 
-    Route::get('/structure',                    [ResponsableController::class, 'maStructure']);
-    Route::patch('/structure',                  [ResponsableController::class, 'modifierMaStructure']);
+    Route::get('/structure',                                    [ResponsableController::class, 'maStructure']);
+    Route::patch('/structure',                                  [ResponsableController::class, 'modifierMaStructure']);
 
-    Route::get('/agents',                       [ResponsableController::class, 'listeAgents']);
-    Route::post('/agents',                      [ResponsableController::class, 'creerAgent']);
-    Route::patch('/agents/{id}',                [ResponsableController::class, 'modifierAgent']);
-    Route::patch('/agents/{id}/toggle',         [ResponsableController::class, 'toggleAgent']);
-    Route::delete('/agents/{id}',               [ResponsableController::class, 'supprimerAgent']);
+    Route::get('/agents',                                       [ResponsableController::class, 'listeAgents']);
+    Route::post('/agents',                                      [ResponsableController::class, 'creerAgent']);
+    Route::patch('/agents/{id}',                                [ResponsableController::class, 'modifierAgent']);
+    Route::patch('/agents/{id}/toggle',                         [ResponsableController::class, 'toggleAgent']);
+    Route::delete('/agents/{id}',                               [ResponsableController::class, 'supprimerAgent']);
 
-    Route::get('/incidents',                    [ResponsableController::class, 'listeIncidents']);
-    Route::patch('/incidents/{id}/affecter',    [ResponsableController::class, 'affecterAgent']);
-    Route::patch('/incidents/{id}/annuler',     [ResponsableController::class, 'annulerIncident']);
+    Route::get('/incidents',                                    [ResponsableController::class, 'listeIncidents']);
+    Route::patch('/incidents/{id}/affecter',                    [ResponsableController::class, 'affecterAgent']);
+    Route::patch('/incidents/{id}/statut',                      [ResponsableController::class, 'changerStatut']);
+    Route::patch('/incidents/{id}/annuler',                     [ResponsableController::class, 'annulerIncident']);
 
-    Route::get('/incidents/{id}/victimes',      [ResponsableController::class, 'listeVictimes']);
-    Route::post('/incidents/{id}/victimes',     [ResponsableController::class, 'ajouterVictime']);
-    Route::delete('/victimes/{id}',             [ResponsableController::class, 'supprimerVictime']);
+    Route::get('/incidents/{id}/victimes',                      [ResponsableController::class, 'listeVictimes']);
+    Route::post('/incidents/{id}/victimes',                     [ResponsableController::class, 'ajouterVictime']);
+    Route::delete('/victimes/{id}',                             [ResponsableController::class, 'supprimerVictime']);
 
-    Route::get('/rapport',                      [ResponsableController::class, 'rapport']);
+    Route::get('/incidents/{incidentId}/agents',                [ResponsableController::class, 'listeAgentsIncident']);
+    Route::post('/incidents/{incidentId}/agents',               [ResponsableController::class, 'ajouterAgentIncident']);
+    Route::delete('/incidents/{incidentId}/agents/{agentId}',   [ResponsableController::class, 'retirerAgentIncident']);
+
+    Route::get('/rapport',                                      [ResponsableController::class, 'rapport']);
 });
 
 // Espace agent
