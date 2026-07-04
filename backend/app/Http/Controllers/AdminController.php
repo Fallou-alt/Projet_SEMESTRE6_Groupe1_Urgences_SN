@@ -7,11 +7,12 @@ use App\Models\Structure;
 use App\Models\User;
 use App\Models\Victime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-    // données du tableau de bord admin (stats globales + incidents récents)
+    // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
     public function tableau()
     {
         return response()->json([
@@ -59,6 +60,13 @@ class AdminController extends Controller
     public function modifierStructure(Request $request, $id)
     {
         $structure = Structure::findOrFail($id);
+
+        // Le type de structure doit rester une des valeurs autorisées
+        $request->validate([
+            'nom'  => 'sometimes|required|string',
+            'type' => 'sometimes|required|in:pompiers,samu,police,gendarmerie,marine,protection_civile,autre',
+        ]);
+
         $structure->update($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
             'commune', 'adresse', 'telephone', 'email',
@@ -81,7 +89,7 @@ class AdminController extends Controller
         return response()->json(['succes' => true, 'actif' => $structure->actif]);
     }
 
-    // liste tout le personnel (responsables + agents)
+    // Liste tout le personnel (responsables + agents)
     public function listeResponsables()
     {
         return response()->json(
@@ -102,19 +110,45 @@ class AdminController extends Controller
             'structure_id' => 'nullable|exists:structures,id',
         ]);
 
-        $utilisateur = User::create([
-            'identifiant'  => $request->identifiant,
-            'mot_de_passe' => Hash::make($request->mot_de_passe),
-            'nom'          => $request->nom,
-            'prenom'       => $request->prenom,
-            'role'         => 'RESPONSABLE',
-            'structure_id' => $request->structure_id,
-        ]);
+        // Création du compte, vérification et rattachement à la structure dans une même
+        // transaction verrouillée : évite qu'une requête concurrente n'assigne un second
+        // responsable à la même structure entre la vérification et l'écriture.
+        try {
+            $utilisateur = DB::transaction(function () use ($request) {
+                if ($request->structure_id) {
+                    $structure = Structure::where('id', $request->structure_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-        // lier le responsable à sa structure
-        if ($request->structure_id) {
-            Structure::where('id', $request->structure_id)
-                ->update(['responsable_id' => $utilisateur->id]);
+                    if ($structure->responsable_id) {
+                        throw new \RuntimeException('STRUCTURE_DEJA_ASSIGNEE');
+                    }
+                }
+
+                $utilisateur = User::create([
+                    'identifiant'  => $request->identifiant,
+                    'mot_de_passe' => Hash::make($request->mot_de_passe),
+                    'nom'          => $request->nom,
+                    'prenom'       => $request->prenom,
+                    'role'         => 'RESPONSABLE',
+                    'structure_id' => $request->structure_id,
+                ]);
+
+                if ($request->structure_id) {
+                    Structure::where('id', $request->structure_id)
+                        ->update(['responsable_id' => $utilisateur->id]);
+                }
+
+                return $utilisateur;
+            });
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'STRUCTURE_DEJA_ASSIGNEE') {
+                return response()->json([
+                    'succes'  => false,
+                    'message' => 'Cette structure a déjà un responsable assigné.',
+                ], 422);
+            }
+            throw $e;
         }
 
         return response()->json([
@@ -165,6 +199,12 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
+        // L'année est obligatoirement sur 4 chiffres, le mois entre 1 et 12
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+            'mois'  => 'sometimes|integer|between:1,12',
+        ]);
+
         $annee   = $request->get('annee', date('Y'));
         $mois    = $request->get('mois');
         $requete = Incident::whereYear('created_at', $annee);
@@ -195,10 +235,11 @@ class AdminController extends Controller
                 'TERMINE'    => $incidents->where('statut', 'TERMINE')->count(),
                 'ANNULE'     => $incidents->where('statut', 'ANNULE')->count(),
             ],
+            // Répartition du nombre d'incidents sur les 12 mois de l'année sélectionnée
             'par_mois' => collect(range(1, 12))->map(fn($m) => [
                 'mois'  => $m,
                 'total' => $incidents->filter(
-                    fn($i) => (int) date('m', strtotime($i->created_at)) === $m
+                    fn($i) => (int) $i->created_at->format('m') === $m
                 )->count(),
             ]),
             'victimes' => [
@@ -212,10 +253,17 @@ class AdminController extends Controller
         ]);
     }
 
-    // export CSV pour le bilan annuel
+    // Export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
+        // Validation ajoutée : "annee" était auparavant utilisée sans contrôle,
+        // à la fois dans la requête SQL et dans l'en-tête Content-Disposition
+        // (risque d'injection dans le nom de fichier téléchargé).
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+        ]);
+
+        $annee     = (int) $request->get('annee', date('Y'));
         $incidents = Incident::whereYear('created_at', $annee)
             ->with(['agent', 'structure'])
             ->latest()->get();
@@ -228,11 +276,11 @@ class AdminController extends Controller
                 $incident->id,
                 $incident->type_urgence,
                 $incident->statut,
-                '"' . str_replace('"', '""', $incident->adresse ?? '') . '"',
-                '"' . str_replace('"', '""', $incident->citoyen_nom ?? '') . '"',
-                $incident->citoyen_telephone ?? '',
+                '"' . $this->champCsvSecurise($incident->adresse) . '"',
+                '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
+                '"' . $this->champCsvSecurise($incident->citoyen_telephone) . '"',
                 $incident->created_at,
-                '"' . $structure . '"',
+                '"' . $this->champCsvSecurise($structure) . '"',
             ]) . "\n";
         }
 
@@ -240,5 +288,22 @@ class AdminController extends Controller
             'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=bilan_urgences_{$annee}.csv",
         ]);
+    }
+
+    /**
+     * Prépare une valeur pour l'export CSV : échappe les guillemets et
+     * neutralise les caractères de début de formule (=, +, -, @) afin
+     * qu'un tableur comme Excel n'interprète jamais le contenu comme une formule.
+     */
+    private function champCsvSecurise(?string $valeur): string
+    {
+        $valeur = $valeur ?? '';
+        $valeur = str_replace('"', '""', $valeur);
+
+        if ($valeur !== '' && in_array($valeur[0], ['=', '+', '-', '@'], true)) {
+            $valeur = "'" . $valeur;
+        }
+
+        return $valeur;
     }
 }
