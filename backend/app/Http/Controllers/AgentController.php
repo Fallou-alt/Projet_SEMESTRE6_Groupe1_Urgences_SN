@@ -28,6 +28,7 @@ class AgentController extends Controller
         ]);
     }
 
+<<<<<<< HEAD
     // liste des missions actives de l'agent (affectées mais pas encore terminées)
     public function mesMissions(Request $request)
     {
@@ -39,6 +40,17 @@ class AgentController extends Controller
                 ->with('victimes')
                 ->latest()->get()
         );
+=======
+    public function mesMissions(Request $request){
+        $agent = $request -> get('_user');
+         return response()->json(
+            incident::where('agent_id', $agent->id)
+            ->whereIn('statut', ['AFFECTE', 'EN_ROUTE', 'SUR_PLACE'])
+            ->with('victimes')
+            ->latest()->get()
+         );
+        
+>>>>>>> eef114cf665649f98d6c98b8457fca1a9e38967b
     }
 
     public function historique(Request $request)
@@ -133,3 +145,4 @@ class AgentController extends Controller
         return response()->json(['succes' => true]);
     }
 }
+
