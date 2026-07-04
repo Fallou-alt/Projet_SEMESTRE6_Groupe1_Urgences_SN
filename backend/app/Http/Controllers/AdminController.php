@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
     // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
-    // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
     public function tableau()
     {
         return response()->json([
@@ -62,7 +61,6 @@ class AdminController extends Controller
     {
         $structure = Structure::findOrFail($id);
 
-        // Le type de structure doit rester une des valeurs autorisées
         $request->validate([
             'nom'  => 'sometimes|required|string',
             'type' => 'sometimes|required|in:pompiers,samu,police,gendarmerie,marine,protection_civile,autre',
@@ -78,8 +76,22 @@ class AdminController extends Controller
 
     public function supprimerStructure($id)
     {
-        // TODO: vérifier qu'il n'y a pas d'incidents actifs avant de supprimer
-        Structure::findOrFail($id)->delete();
+        $structure = Structure::findOrFail($id);
+
+        // FIX : on empêche la suppression tant qu'il existe des incidents
+        // non terminés/non annulés rattachés à la structure.
+        $incidentsActifs = Incident::where('structure_id', $id)
+            ->whereNotIn('statut', ['TERMINE', 'ANNULE'])
+            ->count();
+
+        if ($incidentsActifs > 0) {
+            return response()->json([
+                'succes'  => false,
+                'message' => "Impossible de supprimer cette structure : {$incidentsActifs} incident(s) actif(s) y sont rattachés.",
+            ], 409);
+        }
+
+        $structure->delete();
         return response()->json(['succes' => true]);
     }
 
@@ -111,17 +123,34 @@ class AdminController extends Controller
             'structure_id' => 'required|exists:structures,id',
         ]);
 
-        $utilisateur = User::create([
-            'identifiant'  => $request->identifiant,
-            'mot_de_passe' => Hash::make($request->mot_de_passe),
-            'nom'          => $request->nom,
-            'prenom'       => $request->prenom,
-            'role'         => 'RESPONSABLE',
-            'structure_id' => $request->structure_id,
-        ]);
+        $structure = Structure::findOrFail($request->structure_id);
 
-        Structure::where('id', $request->structure_id)
-            ->update(['responsable_id' => $utilisateur->id]);
+        // FIX : on refuse d'écraser silencieusement un responsable déjà en poste.
+        // (l'ancien responsable resterait rattaché à la structure sans y être référencé)
+        if ($structure->responsable_id) {
+            return response()->json([
+                'succes'  => false,
+                'message' => 'Cette structure a déjà un responsable assigné. Retirez-le avant d\'en assigner un nouveau.',
+            ], 422);
+        }
+
+        // FIX : la création de l'utilisateur et la mise à jour de la structure
+        // doivent réussir ensemble ou pas du tout.
+        $utilisateur = DB::transaction(function () use ($request) {
+            $utilisateur = User::create([
+                'identifiant'  => $request->identifiant,
+                'mot_de_passe' => Hash::make($request->mot_de_passe),
+                'nom'          => $request->nom,
+                'prenom'       => $request->prenom,
+                'role'         => 'RESPONSABLE',
+                'structure_id' => $request->structure_id,
+            ]);
+
+            Structure::where('id', $request->structure_id)
+                ->update(['responsable_id' => $utilisateur->id]);
+
+            return $utilisateur;
+        });
 
         return response()->json([
             'succes'      => true,
@@ -171,13 +200,14 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
-        // L'année est obligatoirement sur 4 chiffres, le mois entre 1 et 12
         $request->validate([
             'annee' => 'sometimes|integer|digits:4',
             'mois'  => 'sometimes|integer|between:1,12',
         ]);
 
-        $annee   = $request->get('annee', date('Y'));
+        // FIX : cast explicite en entier, pour la cohérence avec exporterCsv()
+        // et pour éviter de renvoyer une string dans le JSON de sortie.
+        $annee   = (int) $request->get('annee', date('Y'));
         $mois    = $request->get('mois');
         $requete = Incident::whereYear('created_at', $annee);
 
@@ -207,7 +237,6 @@ class AdminController extends Controller
                 'TERMINE'    => $incidents->where('statut', 'TERMINE')->count(),
                 'ANNULE'     => $incidents->where('statut', 'ANNULE')->count(),
             ],
-            // Répartition du nombre d'incidents sur les 12 mois de l'année sélectionnée
             'par_mois' => collect(range(1, 12))->map(fn($m) => [
                 'mois'  => $m,
                 'total' => $incidents->filter(
@@ -228,9 +257,6 @@ class AdminController extends Controller
     // Export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
-        // Validation ajoutée : "annee" était auparavant utilisée sans contrôle,
-        // à la fois dans la requête SQL et dans l'en-tête Content-Disposition
-        // (risque d'injection dans le nom de fichier téléchargé).
         $request->validate([
             'annee' => 'sometimes|integer|digits:4',
         ]);
@@ -246,12 +272,14 @@ class AdminController extends Controller
             $structure = $incident->structure?->nom ?? 'Non assignée';
             $csv .= implode(',', [
                 $incident->id,
-                $incident->type_urgence,
-                $incident->statut,
+                // FIX : ces champs passent maintenant aussi par la sécurisation CSV,
+                // par cohérence et par précaution si les valeurs autorisées évoluent un jour.
+                '"' . $this->champCsvSecurise($incident->type_urgence) . '"',
+                '"' . $this->champCsvSecurise($incident->statut) . '"',
                 '"' . $this->champCsvSecurise($incident->adresse) . '"',
                 '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
                 '"' . $this->champCsvSecurise($incident->citoyen_telephone) . '"',
-                $incident->created_at,
+                '"' . $this->champCsvSecurise((string) $incident->created_at) . '"',
                 '"' . $this->champCsvSecurise($structure) . '"',
             ]) . "\n";
         }
