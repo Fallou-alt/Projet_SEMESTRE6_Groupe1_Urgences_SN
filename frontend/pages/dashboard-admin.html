@@ -718,22 +718,13 @@
         `;
     }
 
-    // CORRECTION : téléchargement du bilan CSV via fetch + blob avec header Authorization,
-    // au lieu de placer le token dans l'URL (fuite possible via historique/logs/proxy)
-    async function exporterCsv() {
+    function exporterCsv() {
         const annee = document.getElementById('bilan-annee').value;
-        try {
-            const res = await fetch(`${window.location.origin}/api/admin/export-csv?annee=${annee}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-            const blob = await res.blob();
-            const url  = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `bilan_urgences_${annee}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch(e) { console.error(e); }
+        const a = document.createElement('a');
+        a.href = 'http://localhost:8000/api/admin/export-csv?annee=' + annee +
+                 '&token=' + localStorage.getItem('token');
+        a.download = `bilan_urgences_${annee}.csv`;
+        a.click();
     }
 
     // Charge la liste du personnel (agents et responsables) pour l'onglet Personnel
