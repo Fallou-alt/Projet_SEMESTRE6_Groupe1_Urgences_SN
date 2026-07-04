@@ -19,6 +19,29 @@
         #sous-victimes-samu input::placeholder,
         #sous-victimes-samu textarea::placeholder { color: #94A3B8; opacity: 1; }
         #sous-victimes-samu select option { background: #1E293B; color: #F1F5F9; }
+
+        @keyframes pulseUrgence {
+
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+
+        }
+
+        .incident-row.border-start {
+
+            animation:
+                pulseUrgence 1.5s infinite;
+
+        }
     </style>
 </head>
 <body class="dash-body">
@@ -153,6 +176,20 @@
                             <span style="font-size:.8rem;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em">Patients actifs</span>
                             <span id="nb-patients" class="badge rounded-pill" style="background:rgba(59,130,246,.15);color:#93C5FD;font-size:.72rem">0</span>
                         </div>
+
+                            <input
+                                type="text"
+                                id="recherche-patient"
+                                class="form-control mb-3"
+                                placeholder="🔍 Rechercher un patient..."
+                                onkeyup="filtrerPatients()"
+                                style="
+                                    background:#1E293B;
+                                    border:1px solid #334155;
+                                    color:white;
+                                "   
+                            >
+
                         <div id="liste-patients" class="d-flex flex-column gap-2" style="max-height:520px;overflow-y:auto">
                             <div class="text-center py-4" style="color:rgba(255,255,255,.3)">
                                 <div class="spinner-border spinner-border-sm mb-2"></div><br>Chargement...
@@ -177,6 +214,19 @@
                 <div class="p-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
                     <span style="font-size:.85rem;font-weight:600"><i class="bi bi-map me-2" style="color:#3B82F6"></i>Carte des urgences médicales</span>
                 </div>
+                <div class="p-3">
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="centrerCarte()"
+                    >
+                        <i class="bi bi-crosshair"></i>
+
+                        Centrer sur Dakar
+
+                    </button>
+
+                </div>
                 <div id="carte-samu" style="height:520px"></div>
             </div>
         </div>
@@ -187,6 +237,22 @@
                 <div class="p-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
                     <span style="font-size:.85rem;font-weight:600"><i class="bi bi-clock-history me-2" style="color:#3B82F6"></i>Historique médical</span>
                 </div>
+
+                    <div class="p-3">
+
+                    <button
+                        class="btn btn-outline-primary"
+                        onclick="exportHistoriqueCSV()"
+                    >
+
+                        <i class="bi bi-download"></i>
+
+                        Exporter CSV
+
+                    </button>
+
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-dark table-hover mb-0" style="font-size:.85rem">
                         <thead style="background:rgba(255,255,255,.04)">
@@ -230,6 +296,38 @@
     let nbPrecedent  = 0;
     let carteInit    = false;
     let carteObj     = null;
+    let coucheIncidents = null;
+
+
+        function exportHistoriqueCSV() {
+
+            let csv =
+                "ID,Patient,Adresse,Téléphone\n";
+
+            patientsData.forEach(p => {
+
+                csv +=
+                    `${p.id},"${p.nom_citoyen}","${p.adresse}","${p.telephone_citoyen}"\n`;
+
+            });
+
+            const blob = new Blob(
+                [csv],
+                { type: "text/csv" }
+            );
+
+            const a =
+                document.createElement("a");
+
+            a.href =
+                URL.createObjectURL(blob);
+
+            a.download =
+                "historique_samu.csv";
+
+            a.click();
+
+        }
 
     document.addEventListener('DOMContentLoaded', () => {
         const user = requireAuth('samu');
@@ -272,7 +370,25 @@
                         <div class="d-flex justify-content-between align-items-start mb-1">
                             <div class="d-flex align-items-center gap-2">
                                 <span style="font-size:1.1rem">🏥</span>
-                                <span class="fw-semibold" style="font-size:.85rem">Patient #${i.id}</span>
+                                    <div>
+
+                                        <span
+                                            class="fw-semibold"
+                                            style="font-size:.85rem"
+                                        >
+                                            Patient #${i.id}
+                                        </span>
+
+                                        <div
+                                            style="
+                                                font-size:.7rem;
+                                                color:rgba(255,255,255,.4)
+                                            "
+                                        >
+                                            ⏱️ ${tempsEcoule(i.created_at)}
+                                        </div>
+
+                                    </div>
                             </div>
                             <span class="badge-${i.statut}">${STATUTS_LABELS[i.statut]}</span>
                         </div>
@@ -448,6 +564,22 @@
         if (data.success) {
             const idx = patientsData.findIndex(i => i.id === id);
             if (idx !== -1) patientsData[idx] = data.incident;
+            function tempsEcoule(date) {
+
+                const diff = Math.floor(
+                    (Date.now() - new Date(date))
+                    / 60000
+                );
+
+                if (diff < 60) {
+
+                    return `${diff} min`;
+
+                }
+
+                return `${Math.floor(diff / 60)} h`;
+
+            }
             selectPatient(id);
             setTimeout(chargerPatients, 400);
         }
@@ -462,13 +594,58 @@
             carteInit = true;
             carteObj  = L.map('carte-samu').setView([14.6937, -17.4441], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteObj);
-            patientsData.forEach(i => {
-                if (!i.latitude || !i.longitude) return;
-                L.circleMarker([i.latitude, i.longitude], { radius: 12, color: '#fff', weight: 2, fillColor: '#3B82F6', fillOpacity: 1 })
-                 .addTo(carteObj).bindPopup(`<strong>Patient #${i.id}</strong><br>${i.nom_citoyen || 'Anonyme'}<br>${i.adresse || ''}`);
-            });
+                if (coucheIncidents) {
+
+                    carteObj.removeLayer(
+                        coucheIncidents
+                    );
+
+                }
+
+                coucheIncidents = L.layerGroup();
+
+                patientsData.forEach(i => {
+
+                    if (!i.latitude || !i.longitude)
+                        return;
+
+                    L.circleMarker(
+                        [i.latitude, i.longitude],
+                        {
+                            radius:12,
+                            color:'#fff',
+                            weight:2,
+                            fillColor:'#3B82F6',
+                            fillOpacity:1
+                        }
+                    )
+                    .bindPopup(`
+                        <strong>
+                            Patient #${i.id}
+                        </strong>
+                        <br>
+                        ${i.nom_citoyen || 'Anonyme'}
+                    `)
+                    .addTo(coucheIncidents);
+
+                });
+
+                coucheIncidents.addTo(carteObj);
         }
     }
+
+        function centrerCarte() {
+
+            if (carteObj) {
+
+                carteObj.setView(
+                    [14.6937, -17.4441],
+                    12
+                );
+
+            }
+
+        }
 
     function toggleIdForm() {
         const f = document.getElementById('id-form');
@@ -550,6 +727,28 @@
             msg.style.cssText = 'font-size:.75rem;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25)';
         }
     }
+
+        function filtrerPatients() {
+
+            const texte =
+                document
+                .getElementById('recherche-patient')
+                .value
+                .toLowerCase();
+
+            document.querySelectorAll('.incident-row')
+            .forEach(row => {
+
+                row.style.display =
+                    row.innerText
+                    .toLowerCase()
+                    .includes(texte)
+                    ? ''
+                    : 'none';
+
+            });
+
+        }
 
     document.addEventListener('DOMContentLoaded', () => {
         chargerPatients();

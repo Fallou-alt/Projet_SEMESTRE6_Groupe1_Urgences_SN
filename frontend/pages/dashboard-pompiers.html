@@ -240,6 +240,7 @@
     let nbPrecedent   = 0;
     let carteInit     = false;
     let carteObj      = null;
+    let coucheIncidents = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         const user = requireAuth('pompier');
@@ -496,9 +497,22 @@
 
     // Initialiser la carte Leaflet
     function initialiserCarte() {
+
         carteInit = true;
-        carteObj  = L.map('carte-pompiers').setView([14.6937, -17.4441], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteObj);
+
+        carteObj = L.map('carte-pompiers')
+            .setView([14.6937, -17.4441], 12);
+
+        L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                attribution: '© OpenStreetMap'
+            }
+        ).addTo(carteObj);
+
+        // Nouvelle couche pour les incidents
+        coucheIncidents = L.layerGroup().addTo(carteObj);
+
         mettreAJourCarte(incidentsData);
     }
 
