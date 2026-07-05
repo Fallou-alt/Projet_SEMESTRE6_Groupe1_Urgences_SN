@@ -434,6 +434,18 @@
     let tousStructures = [];  // cache des structures (utilisé par l'onglet Structures et le formulaire agent)
     let marqueursCarte = [];  // marqueurs actuellement affichés sur la carte
 
+    // CORRECTION : échappement HTML pour éviter les injections à partir de champs texte
+    // saisis par des utilisateurs (citoyens, structures, etc.) et affichés via innerHTML
+    function echap(txt) {
+        if (txt === null || txt === undefined) return '';
+        return String(txt)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Point d'entrée : vérifie les droits admin puis initialise l'horloge et le tableau de bord
     document.addEventListener('DOMContentLoaded', () => {
         const utilisateur = verifierAuth('ADMIN');
@@ -468,7 +480,7 @@
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
-                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td style="color:rgba(255,255,255,.5)">${echap(i.adresse) || '—'}</td>
                     <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                 </tr>
@@ -495,8 +507,8 @@
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
-                    <td style="color:rgba(255,255,255,.6)">${i.citoyen_nom || '—'}</td>
-                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td style="color:rgba(255,255,255,.6)">${echap(i.citoyen_nom) || '—'}</td>
+                    <td style="color:rgba(255,255,255,.5)">${echap(i.adresse) || '—'}</td>
                     <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                     <td>
@@ -533,15 +545,15 @@
                 : data.map(s => `
                     <tr>
                         <td>
-                            <div class="fw-semibold">${s.nom}</div>
-                            ${s.sigle ? `<div style="font-size:.72rem;color:rgba(255,255,255,.35)">${s.sigle}</div>` : ''}
+                            <div class="fw-semibold">${echap(s.nom)}</div>
+                            ${s.sigle ? `<div style="font-size:.72rem;color:rgba(255,255,255,.35)">${echap(s.sigle)}</div>` : ''}
                         </td>
                         <td>${TYPES[s.type] || '🏢'} ${s.type}</td>
                         <td>
-                            ${s.responsable_nom ? `<div style="font-size:.82rem">${s.responsable_nom}</div>` : ''}
-                            ${s.responsable_titre ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4)">${s.responsable_titre}</div>` : (!s.responsable_nom ? '<span style="color:rgba(255,255,255,.25)">—</span>' : '')}
+                            ${s.responsable_nom ? `<div style="font-size:.82rem">${echap(s.responsable_nom)}</div>` : ''}
+                            ${s.responsable_titre ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4)">${echap(s.responsable_titre)}</div>` : (!s.responsable_nom ? '<span style="color:rgba(255,255,255,.25)">—</span>' : '')}
                         </td>
-                        <td style="color:rgba(255,255,255,.5);font-size:.8rem">${s.adresse || '—'}</td>
+                        <td style="color:rgba(255,255,255,.5);font-size:.8rem">${echap(s.adresse) || '—'}</td>
                         <td style="color:rgba(255,255,255,.5)">${s.telephone || '—'}</td>
                         <td><span style="font-size:.78rem;color:${s.actif ? '#86EFAC' : '#FCA5A5'}">${s.actif ? '● Active' : '○ Inactive'}</span></td>
                         <td class="d-flex gap-1">
@@ -559,7 +571,7 @@
             // Reconstruit le select "Structure" du formulaire de création d'agent avec les données à jour
             const sel = document.getElementById('a-structure');
             sel.innerHTML = '<option value="">— Aucune —</option>' +
-                data.map(s => `<option value="${s.id}">${s.nom}</option>`).join('');
+                data.map(s => `<option value="${s.id}">${echap(s.nom)}</option>`).join('');
         } catch(e) { console.error(e); }
     }
 
@@ -578,7 +590,7 @@
         document.getElementById('st-tel').value          = s.telephone || '';
         document.getElementById('st-email').value        = s.email || '';
         document.getElementById('st-form-titre').innerHTML =
-            '<i class="bi bi-pencil me-2" style="color:#8B5CF6"></i>Modifier : ' + s.nom;
+            '<i class="bi bi-pencil me-2" style="color:#8B5CF6"></i>Modifier : ' + echap(s.nom);
         document.getElementById('st-btn-save').innerHTML = '<i class="bi bi-check-circle me-1"></i> Enregistrer';
         document.getElementById('st-btn-cancel').classList.remove('d-none');
         document.getElementById('msg-structure').className = 'rounded-3 p-2 mb-3 d-none';
@@ -732,17 +744,23 @@
     }
 
     // Charge la liste du personnel (agents et responsables) pour l'onglet Personnel
+    // CORRECTION : /admin/responsables ne renvoyait que les responsables ; les agents créés
+    // via /admin/agents n'apparaissaient jamais dans la liste. On récupère maintenant les deux.
     async function chargerAgents() {
         try {
-            const data = await apiCall('/admin/responsables');
+            const [responsables, agents] = await Promise.all([
+                apiCall('/admin/responsables'),
+                apiCall('/admin/agents')
+            ]);
+            const data = [...responsables, ...agents];
             document.getElementById('tbody-agents').innerHTML = data.length === 0
                 ? '<tr><td colspan="6" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucun membre du personnel</td></tr>'
                 : data.map(a => `
                 <tr>
-                    <td class="fw-semibold">${a.prenom} ${a.nom}</td>
-                    <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${a.identifiant}</td>
+                    <td class="fw-semibold">${echap(a.prenom)} ${echap(a.nom)}</td>
+                    <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${echap(a.identifiant)}</td>
                     <td><span class="badge-role-${a.role.toLowerCase()}">${a.role}</span></td>
-                    <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? a.structure.nom : '—'}</td>
+                    <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? echap(a.structure.nom) : '—'}</td>
                     <td>
                         <span style="font-size:.78rem;color:${a.actif ? '#86EFAC' : '#FCA5A5'}">
                             ${a.actif ? '● Actif' : '○ Inactif'}
@@ -844,7 +862,7 @@
             const m = L.circleMarker([i.latitude, i.longitude], {
                 radius: 10, color: '#fff', weight: 2,
                 fillColor: couleurs[i.type_urgence] || '#6B7280', fillOpacity: 1
-            }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${i.adresse || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
+            }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${echap(i.adresse) || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
             marqueursCarte.push(m);
         });
     }
