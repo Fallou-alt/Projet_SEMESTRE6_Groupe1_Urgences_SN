@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     /**
- * Exécute l'insertion des données initiales
- * nécessaires au fonctionnement et aux tests de l'application.
+ * Insére les données de base requises pour le fonctionnement
+  * de l'application.
  */
     public function run(): void
     {
@@ -70,7 +70,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Lier les responsables aux structures
+        // Rattacher les responsables aux structures correspondantes.
         if ($pompiers && !$pompiers->responsable_id) {
             $pompiers->update(['responsable_id' => $respPompiers->id]);
         }
