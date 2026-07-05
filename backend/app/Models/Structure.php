@@ -23,20 +23,20 @@ class Structure extends Model
     {
         return $this->hasMany(User::class)->where('role', 'AGENT');
     }
-    /**
- * Retourne tous les utilisateurs rattachés à la structure.
- */
+     /**
+     * Retourne tous les utilisateurs rattachés à la structure.
+     */
 
     public function users()
     {
         return $this->hasMany(User::class);
     }
-/**
- * Liste des incidents pris en charge par cette structure.
- */
+      /**
+     * Liste des incidents pris en charge par cette structure.
+     */
     public function incidents()
     {
         return $this->hasMany(Incident::class);
     }
 }
-// Documentation ajoutée par Mbene
+
