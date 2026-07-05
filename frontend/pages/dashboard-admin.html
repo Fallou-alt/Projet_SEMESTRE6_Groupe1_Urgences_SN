@@ -501,6 +501,10 @@
                                 style="background:rgba(59,130,246,.15);color:#93C5FD;border:1px solid rgba(59,130,246,.25);font-size:.72rem">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <button onclick="supprimerIncident(${i.id})" class="btn btn-sm rounded-2"
+                                style="background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25);font-size:.72rem">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -808,7 +812,7 @@
         evenement.currentTarget.classList.add('active');
 
         if (nom === 'incidents')  chargerIncidents();
-        if (nom === 'agents')      chargerAgents();
+        if (nom === 'agents')      { chargerAgents(); chargerStructures(); }
         if (nom === 'structures')  chargerStructures();
         if (nom === 'bilan')       {
             const sel = document.getElementById('bilan-annee');
