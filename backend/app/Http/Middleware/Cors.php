@@ -9,7 +9,7 @@ class Cors
 {
     public function handle(Request $request, Closure $next)
     {
-        // si c'est une requête OPTIONS (preflight), on répond directement sans passer par les routes
+        // requête OPTIONS (preflight CORS) : réponse directe sans passer par les routes
         if ($request->isMethod('OPTIONS')) {
             return response()->json('OK', 200, [
                 'Access-Control-Allow-Origin'  => '*',

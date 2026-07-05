@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    // connexion des utilisateurs (admin, responsable, agent)
+    // authentification : admin, responsable, agent
     public function connexion(Request $request)
     {
         $request->validate([
@@ -31,7 +31,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
-        // je génère un token aléatoire de 60 caractères, suffisant pour ce projet
+        // token aléatoire 60 chars, pas besoin de JWT ici
         $token = Str::random(60);
         $utilisateur->update(['token' => $token]);
 
@@ -73,7 +73,7 @@ class AuthController extends Controller
         return response()->json(['succes' => true]);
     }
 
-    // permet à n'importe quel utilisateur connecté de changer son nom/prénom
+    // modification nom/prénom pour tout utilisateur connecté
     public function modifierProfil(Request $request)
     {
         $request->validate([
