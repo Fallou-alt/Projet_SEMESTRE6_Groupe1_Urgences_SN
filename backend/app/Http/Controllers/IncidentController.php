@@ -83,7 +83,7 @@ class IncidentController extends Controller
     {
         return response()->json([
             'total' => Incident::count(),
-
+// Incidents actifs (non terminés et non annulés)
             'en_cours' => Incident::whereNotIn('statut', [
                 Incident::STATUT_TERMINE,
                 Incident::STATUT_ANNULE,
