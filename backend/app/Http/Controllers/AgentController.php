@@ -56,6 +56,8 @@ class AgentController extends Controller
     // mise à jour du statut de la mission par l'agent sur le terrain
     public function changerStatut(Request $request, $id)
     {
+        // statut limité aux 3 valeurs que l'agent peut déclencher lui-même
+        // (il ne peut pas remettre EN_ATTENTE ni ANNULER un incident)
         $request->validate([
             'statut' => 'required|in:EN_ROUTE,SUR_PLACE,TERMINE',
         ]);
@@ -77,6 +79,7 @@ class AgentController extends Controller
 
     public function ajouterCommentaire(Request $request, $id)
     {
+        // commentaire obligatoire : évite d'écraser un commentaire existant avec une valeur vide
         $request->validate([
             'commentaire' => 'required|string',
         ]);
