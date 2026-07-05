@@ -1,6 +1,9 @@
 # Urgences SN : Plateforme nationale de gestion des urgences
 
-Projet de fin de licence en Informatique de Gestion.
+> Projet de fin de licence en Informatique de Gestion — Université de Dakar, 2025
+
+**Repository** : https://github.com/Fallou-alt/Urgences_SN 
+**Maquette Figma** : *(lien à ajouter)*
 
 ## Contexte
 
