@@ -52,7 +52,15 @@ class IncidentController extends Controller
     {
         $incident = Incident::findOrFail($id);
 
-        return response()->json($incident);
+        return response()->json([
+            'id' => $incident->id,
+            'type_urgence' => $incident->type_urgence,
+            'statut' => $incident->statut,
+            'adresse' => $incident->adresse,
+            'description' => $incident->description,
+            'created_at' => $incident->created_at,
+            'updated_at' => $incident->updated_at,
+        ]);
     }
 
     public function statistiquesPubliques(): JsonResponse
