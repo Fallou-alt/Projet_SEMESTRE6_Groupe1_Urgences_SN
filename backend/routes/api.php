@@ -15,7 +15,7 @@ Route::get('/stats',                 [IncidentController::class, 'statistiquesPu
 
 // Authentification
 Route::post('/connexion',  [AuthController::class, 'connexion']);
-// TODO: ajouter une route d'inscription pour les citoyens qui veulent suivre leurs incidents
+// TODO: ajouter une route /inscription pour les citoyens qui veulent suivre leurs incidents
 
 Route::middleware(AuthToken::class)->group(function () {
     Route::post('/deconnexion',       [AuthController::class, 'deconnexion']);
