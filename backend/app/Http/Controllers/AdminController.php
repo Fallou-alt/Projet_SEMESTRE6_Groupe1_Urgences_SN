@@ -205,10 +205,10 @@ class AdminController extends Controller
             'mois'  => 'sometimes|integer|between:1,12',
         ]);
 
-        // FIX : cast explicite en entier, pour la cohérence avec exporterCsv()
-        // et pour éviter de renvoyer une string dans le JSON de sortie.
         $annee   = (int) $request->get('annee', date('Y'));
-        $mois    = $request->get('mois');
+        // FIX : cast explicite en entier (ou null), pour la même cohérence
+        // que $annee — sinon $mois restait une string dans le JSON de sortie.
+        $mois    = $request->filled('mois') ? (int) $request->get('mois') : null;
         $requete = Incident::whereYear('created_at', $annee);
 
         if ($mois) {
