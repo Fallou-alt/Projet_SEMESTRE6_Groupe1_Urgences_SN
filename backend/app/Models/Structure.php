@@ -11,8 +11,8 @@ class Structure extends Model
         'adresse', 'telephone', 'email', 'responsable_id', 'actif',
     ];
     /**
- * Retourne le responsable associé à cette structure.
- */
+    * Récupère le responsable lié à cette structure.
+    */
 
     public function responsable()
     {
@@ -24,7 +24,7 @@ class Structure extends Model
         return $this->hasMany(User::class)->where('role', 'AGENT');
     }
      /**
-     * Retourne tous les utilisateurs rattachés à la structure.
+     * Renvoie tous les utilisateurs rattachés à cette structure.
      */
 
     public function users()
