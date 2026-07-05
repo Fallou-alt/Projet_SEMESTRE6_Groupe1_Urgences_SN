@@ -3,29 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-    /**
-     * Gestion centralisée des statuts d'incident pour éviter les valeurs en dur.
-     */
+
 /**
- * Modèle Incident.
+ * Modèle Incident
  *
  * Représente une urgence déclarée par un citoyen.
- * Un incident peut être assigné à des agents et contenir des victimes.
  */
 class Incident extends Model
 {
     /**
-     * Statuts possibles d'un incident.
+     * Statuts centralisés
      */
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS = 'EN_COURS';
-    public const STATUT_TERMINE = 'TERMINE';
-    public const STATUT_ANNULE = 'ANNULE';
+    public const STATUT_EN_COURS   = 'EN_COURS';
+    public const STATUT_TERMINE    = 'TERMINE';
+    public const STATUT_ANNULE     = 'ANNULE';
 
     /**
-     * Attributs autorisés en écriture (mass assignment).
-     *
-     * @var array<int, string>
+     * Champs modifiables
      */
     protected $fillable = [
         'type_urgence',
@@ -42,34 +37,21 @@ class Incident extends Model
         'agent_id',
     ];
 
-    /**
-     * Structure responsable de l'incident.
-     */
     public function structure()
     {
         return $this->belongsTo(Structure::class);
     }
 
-    /**
-     * Agent principal assigné à l'incident.
-     */
     public function agent()
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    /**
-     * Agents associés à l'incident.
-     */
     public function agents()
     {
-        return $this->belongsToMany(User::class, 'incident_agents', 'incident_id', 'user_id')
-            ->select('users.id', 'users.nom', 'users.prenom', 'users.identifiant');
+        return $this->belongsToMany(User::class, 'incident_agents');
     }
 
-    /**
-     * Victimes liées à l'incident.
-     */
     public function victimes()
     {
         return $this->hasMany(Victime::class);
