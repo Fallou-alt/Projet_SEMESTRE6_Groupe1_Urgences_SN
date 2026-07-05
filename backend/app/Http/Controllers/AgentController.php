@@ -20,7 +20,7 @@ class AgentController extends Controller
                 'en_cours' => $missions->whereIn('statut', ['AFFECTE', 'EN_ROUTE', 'SUR_PLACE'])->count(),
                 'termines' => $missions->where('statut', 'TERMINE')->count(),
             ],
-            // la mission en cours la plus récente
+            // dernière mission en cours
             'mission_en_cours' => Incident::where('agent_id', $agent->id)
                 ->whereIn('statut', ['AFFECTE', 'EN_ROUTE', 'SUR_PLACE'])
                 ->with('victimes')
@@ -28,7 +28,7 @@ class AgentController extends Controller
         ]);
     }
 
-    // liste des missions actives de l'agent (affectées mais pas encore terminées)
+    // missions actives de l'agent (affectées, non terminées)
     public function mesMissions(Request $request)
     {
         $agent = $request->get('_user');
@@ -45,7 +45,7 @@ class AgentController extends Controller
     {
         $agent = $request->get('_user');
 
-        // on retourne seulement les missions terminées
+        // uniquement les missions terminées
         return response()->json(
             Incident::where('agent_id', $agent->id)
                 ->where('statut', 'TERMINE')
@@ -53,7 +53,7 @@ class AgentController extends Controller
         );
     }
 
-    // l'agent fait avancer le statut de sa mission sur le terrain
+    // mise à jour du statut de la mission par l'agent sur le terrain
     public function changerStatut(Request $request, $id)
     {
         $request->validate([
@@ -65,7 +65,7 @@ class AgentController extends Controller
 
         $donnees = ['statut' => $request->statut];
 
-        // si l'agent termine la mission il peut laisser un commentaire
+        // commentaire optionnel à la clôture
         if ($request->statut === 'TERMINE' && $request->filled('commentaire')) {
             $donnees['commentaire'] = $request->commentaire;
         }
@@ -126,7 +126,7 @@ class AgentController extends Controller
         $agent   = $request->get('_user');
         $victime = Victime::findOrFail($id);
 
-        // vérifier que la victime appartient bien à une mission de cet agent
+        // vérification : la victime doit appartenir à une mission de cet agent
         Incident::where('agent_id', $agent->id)->findOrFail($victime->incident_id);
 
         $victime->delete();

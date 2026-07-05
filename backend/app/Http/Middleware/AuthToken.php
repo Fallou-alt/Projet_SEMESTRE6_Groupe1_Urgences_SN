@@ -15,7 +15,7 @@ class AuthToken
      */
     public function handle(Request $request, Closure $next, string $role = null)
     {
-        // on accepte le token soit dans le header Bearer soit en query param (pour l'export CSV)
+        // token accepté via header Bearer ou query param (export CSV)
         $token = $request->bearerToken() ?? $request->query('token');
         $user  = $token ? User::where('token', $token)->where('actif', true)->first() : null;
 
@@ -23,7 +23,7 @@ class AuthToken
             return response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401);
         }
 
-        // l'admin a accès à tout, pas besoin de vérifier le rôle
+        // ADMIN bypass la vérification de rôle
         if ($role && $user->role !== $role && $user->role !== 'ADMIN') {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }

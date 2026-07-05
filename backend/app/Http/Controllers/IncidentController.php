@@ -37,7 +37,7 @@ class IncidentController extends Controller
             'citoyen_telephone' => 'nullable|string|max:20',
         ]);
 
-        // TODO: améliorer pour prendre en compte la région du citoyen
+        // TODO: affiner l'affectation en tenant compte de la région du citoyen
         $typeStructure = match($request->type_urgence) {
             'medical'  => 'samu',
             'incendie' => 'pompiers',
