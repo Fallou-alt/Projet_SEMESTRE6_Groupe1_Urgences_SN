@@ -7,7 +7,10 @@ use App\Models\Structure;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-
+/**
+ * API de déclaration d'incident avec affectation automatique
+ * selon le type d'urgence.
+ */
 class IncidentController extends Controller
 {
     /**
@@ -19,7 +22,7 @@ class IncidentController extends Controller
      */
     public function declarer(Request $request): JsonResponse
     {
-        // Validation des données envoyées
+        // Validation stricte des données envoyées par le citoyen
         $validated = $request->validate([
             'type_urgence' => 'required|in:incendie,accident,medical,autre',
             'latitude' => 'nullable|numeric',
