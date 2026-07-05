@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class Incident extends Model
 {
     /**
-     * Statuts centralisés
+     * Statuts centralisés d'un incident
      */
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
     public const STATUT_EN_COURS   = 'EN_COURS';
@@ -20,7 +20,7 @@ class Incident extends Model
     public const STATUT_ANNULE     = 'ANNULE';
 
     /**
-     * Champs modifiables
+     * Champs autorisés en écriture
      */
     protected $fillable = [
         'type_urgence',
@@ -37,21 +37,25 @@ class Incident extends Model
         'agent_id',
     ];
 
+    /**
+     * Structure liée à l'incident
+     */
     public function structure()
     {
         return $this->belongsTo(Structure::class);
     }
 
+    /**
+     * Agent assigné
+     */
     public function agent()
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    public function agents()
-    {
-        return $this->belongsToMany(User::class, 'incident_agents');
-    }
-
+    /**
+     * Victimes liées à l'incident
+     */
     public function victimes()
     {
         return $this->hasMany(Victime::class);
