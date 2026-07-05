@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+    /**
+     * Gestion centralisée des statuts d'incident pour éviter les valeurs en dur.
+     */
 /**
  * Modèle Incident.
  *
