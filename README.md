@@ -18,7 +18,7 @@ Ce projet propose une plateforme web qui permet :
 - **Base de données** : MySQL
 - **Cartographie** : Leaflet.js + OpenStreetMap
 
-J'ai choisi de ne pas utiliser de framework JS (React, Vue) pour le frontend car l'objectif était de rester simple et maintenable, et de me concentrer sur la logique métier plutôt que sur la configuration d'un environnement complexe.
+Le choix de ne pas utiliser de framework JS (React, Vue) est volontaire : priorité à la simplicité, la maintenabilité et la logique métier.
 
 ## Installation
 
@@ -105,9 +105,9 @@ urgences-sn/
 
 ## Difficultés rencontrées
 
-- La gestion des rôles avec un seul middleware a demandé quelques ajustements, notamment pour que l'admin puisse accéder aux routes des responsables sans avoir de `structure_id`
-- La géolocalisation GPS sur mobile nécessite HTTPS en production, j'ai mis un fallback sur Dakar pour les tests en local
-- Le système de plusieurs agents par incident a nécessité une table pivot `incident_agents` que j'ai ajoutée en cours de développement (la première version n'avait qu'un seul `agent_id`)
+- La gestion des rôles avec un seul middleware a demandé quelques ajustements pour que l'admin accède aux routes des responsables sans `structure_id`
+- La géolocalisation GPS sur mobile nécessite HTTPS en production, un fallback sur Dakar est prévu pour les tests en local
+- Le système multi-agents par incident a nécessité une table pivot `incident_agents`, ajoutée en cours de développement (la v1 n'avait qu'un seul `agent_id`)
 
 ## Améliorations possibles
 
