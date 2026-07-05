@@ -39,11 +39,12 @@ class IncidentController extends Controller
             'citoyen_nom' => 'nullable|string|max:255',
             'citoyen_telephone' => 'nullable|string|max:20',
         ]);
-// Détermination du type de structure compétente.
+
+        // TODO: affiner l'affectation en tenant compte de la région du citoyen
         $typeStructure = match ($request->type_urgence) {
-            'medical' => 'samu',
+            'medical'            => 'samu',
             'incendie', 'accident' => 'pompiers',
-            default => null,
+            default              => null,
         };
 // Recherche d'une structure active correspondant au type d'urgence.
         $structure = $typeStructure
