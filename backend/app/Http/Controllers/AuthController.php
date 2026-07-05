@@ -19,9 +19,12 @@ class AuthController extends Controller
 
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
 
-        // vérifier que le compte existe et que le mdp est bon
-        if (!$utilisateur || !Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe)) {
-            return response()->json(['message' => 'Identifiant ou mot de passe incorrect. Vérifiez vos informations.'], 401);
+        // Hash::check sur un hash factice si l'utilisateur n'existe pas : évite le timing attack
+        $hashFactice = '$2y$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
+        $mdpValide   = Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe ?? $hashFactice);
+
+        if (!$utilisateur || !$mdpValide) {
+            return response()->json(['message' => 'Identifiant ou mot de passe incorrect.'], 401);
         }
 
         if (!$utilisateur->actif) {
