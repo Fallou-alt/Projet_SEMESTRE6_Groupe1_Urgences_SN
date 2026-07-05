@@ -190,6 +190,23 @@ class AdminController extends Controller
         return response()->json(['succes' => true, 'actif' => $utilisateur->actif]);
     }
 
+    public function supprimerUtilisateur($id)
+    {
+        $utilisateur = User::findOrFail($id);
+
+        if ($utilisateur->role === 'ADMIN') {
+            return response()->json(['succes' => false, 'message' => 'Impossible de supprimer un administrateur.'], 403);
+        }
+
+        // Libérer la structure si c'était un responsable
+        if ($utilisateur->role === 'RESPONSABLE') {
+            Structure::where('responsable_id', $utilisateur->id)->update(['responsable_id' => null]);
+        }
+
+        $utilisateur->delete();
+        return response()->json(['succes' => true]);
+    }
+
     public function listeIncidents()
     {
         return response()->json(
