@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
                 'structure_id' => null,
             ]
         );
+        // Création des structures de secours utilisées par le système.
 
         // ─── Structures ───────────────────────────────────────────────────────
         $structuresData = [
@@ -44,6 +45,7 @@ class DatabaseSeeder extends Seeder
 
         $pompiers = Structure::where('sigle', 'SPD')->first();
         $samu     = Structure::where('sigle', 'SAMU')->first();
+        // Création des comptes responsables des différentes structures.
 
         // ─── Responsables ─────────────────────────────────────────────────────
         $respPompiers = User::firstOrCreate(
