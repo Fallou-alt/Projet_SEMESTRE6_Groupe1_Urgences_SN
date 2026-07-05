@@ -35,12 +35,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Ajouter les clés étrangères croisées maintenant que les deux tables existent
+        // Ajouter les clés étrangères une fois les deux tables créées.
         // Mise en place des relations entre utilisateurs et structures
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('structure_id')->references('id')->on('structures')->nullOnDelete();
         });
-        // Association du responsable à sa structure
+        // Rattachement du responsable à sa structure
 
         Schema::table('structures', function (Blueprint $table) {
             $table->foreign('responsable_id')->references('id')->on('users')->nullOnDelete();
