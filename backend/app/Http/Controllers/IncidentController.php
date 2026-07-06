@@ -29,6 +29,7 @@ class IncidentController extends Controller
  */
     public function declarer(Request $request): JsonResponse
     {
+    // Validation des informations envoyées par le citoyen.
         $validated = $request->validate([
             'type_urgence' => 'required|in:incendie,accident,medical,autre',
             'latitude' => 'nullable|numeric',
@@ -38,23 +39,23 @@ class IncidentController extends Controller
             'citoyen_nom' => 'nullable|string|max:255',
             'citoyen_telephone' => 'nullable|string|max:20',
         ]);
-
+// Détermination du type de structure compétente.
         $typeStructure = match ($request->type_urgence) {
             'medical' => 'samu',
             'incendie', 'accident' => 'pompiers',
             default => null,
         };
-
+// Recherche d'une structure active correspondant au type d'urgence.
         $structure = $typeStructure
             ? Structure::where('type', $typeStructure)->where('actif', true)->first()
             : Structure::where('actif', true)->first();
-
+// Création de l'incident avec son statut initial.
         $incident = Incident::create([
             ...$validated,
             'statut' => Incident::STATUT_EN_ATTENTE,
             'structure_id' => $structure?->id,
         ]);
-
+// Retour de la réponse après création de l'incident.
         return response()->json([
             'success' => true,
             'id' => $incident->id,
