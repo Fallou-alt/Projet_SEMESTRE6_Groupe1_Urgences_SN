@@ -35,8 +35,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Ajouter les clés étrangères une fois les deux tables créées.
-        // Mise en place des relations entre utilisateurs et structures
+        
+        // Définition des relations entre les utilisateurs et les structures
+        // après la création des deux tables afin d'éviter les dépendances circulaires.
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('structure_id')->references('id')->on('structures')->nullOnDelete();
         });
