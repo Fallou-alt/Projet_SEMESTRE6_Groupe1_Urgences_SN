@@ -1,26 +1,27 @@
-/* ════════════════════════════════════════════
+
+   Auteur 
+══════════════════════════ Projet mémoire de licence══════════════════ */
+/* ==========================================================
+   /* ════════════════════════════════════════════
    URGENCES SN — Feuille de style globale
    Stack : HTML5 / CSS3 / Bootstrap 5
    Auteur : Projet mémoire de licence
 ════════════════════════════════════════════ */
-/* ==========================================================
-   PALETTE DE COULEURS
-   Toutes les couleurs principales sont centralisées ici
-   afin de faciliter la maintenance du projet.
-========================================================== */
-/* ── Variables couleurs (prompt) ── */
+/* ========================================================== */
+/* ── Variables CSS ── */
 :root {
-    --rouge:        #E53935;
-    --rouge-fonce:  #B71C1C;
-    --rouge-clair:  #FFEBEE;
-    --bleu-samu:    #1E88E5;
-    --gris-clair:   #F5F5F5;
-    --gris-texte:   #616161;
-    --sombre:       #0B0F1A;
-    --card-dark:    #1A2235;
-    --border-dark:  rgba(255,255,255,.07);
-}
+    --rouge: #E53935;
+    --rouge-fonce: #B71C1C;
+    --rouge-clair: #FFEBEE;
+    --bleu-samu: #1E88E5;
 
+    --gris-clair: #F5F5F5;
+    --gris-texte: #616161;
+    --sombre: #0B0F1A;
+
+    --card-dark: #1A2235;
+    --border-dark: rgba(255,255,255,.07);
+}
 /* ── Typographie ── */
 body {
     font-family: 'Inter', sans-serif;
@@ -70,7 +71,10 @@ h1, h2, h3, h4, h5, .font-poppins {
     transition: transform .15s;
     cursor: pointer;
 }
-.btn-sos:hover  { transform: scale(1.06); color: var(--rouge-fonce); }
+.btn-sos:focus {
+    outline: 4px solid rgba(255,255,255,.35);
+    outline-offset: 6px;
+}
 .btn-sos:active { transform: scale(.96); }
 /* ==========================================================
    COMPOSANTS PRINCIPAUX
@@ -173,8 +177,13 @@ h1, h2, h3, h4, h5, .font-poppins {
     box-shadow: 0 4px 24px rgba(0,0,0,.06);
     border: none;
     height: 100%;
-    transition: transition: all .3s ease;
-}
+    transition: transform .3s, box-shadow .3s;
+    }
+    
+
+
+
+
 .service-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 16px 48px rgba(0,0,0,.12);
@@ -203,6 +212,11 @@ h1, h2, h3, h4, h5, .font-poppins {
     text-align: center;
     width: 100%;
     display: block;
+}
+.type-urgence-btn:focus {
+    outline: none;
+    border-color: var(--bleu-samu);
+    box-shadow: 0 0 0 .2rem rgba(30, 136, 229, .25);
 }
 .type-urgence-btn:hover   { border-color: var(--rouge); box-shadow: 0 4px 16px rgba(229,57,53,.15); }
 .type-urgence-btn.selected {
@@ -299,8 +313,9 @@ h1, h2, h3, h4, h5, .font-poppins {
     background: rgba(229,57,53,.14);
     color: #fff;
     border-left: 3px solid var(--rouge);
-    padding-left: 
+    padding-left: 1rem;
 }
+
 .sidebar-user {
     padding: 14px;
     border-top: 1px solid var(--border-dark);
