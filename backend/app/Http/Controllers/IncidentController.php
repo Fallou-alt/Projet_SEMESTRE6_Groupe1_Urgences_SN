@@ -9,11 +9,24 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API de gestion des incidents
- * avec affectation automatique selon le type d'urgence.
+ * Contrôleur de gestion des incidents.
+ *
+ * Ce contrôleur permet :
+ * - de déclarer un incident ;
+ * - de consulter son suivi ;
+ * - d'obtenir les statistiques publiques.
  */
 class IncidentController extends Controller
 {
+    /**
+ * Déclare un nouvel incident.
+ *
+ * Les données reçues sont validées puis une structure
+ * est sélectionnée automatiquement selon le type d'urgence.
+ *
+ * @param Request $request
+ * @return JsonResponse
+ */
     public function declarer(Request $request): JsonResponse
     {
         $validated = $request->validate([
