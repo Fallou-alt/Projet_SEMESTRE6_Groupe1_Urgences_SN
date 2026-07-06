@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+/**
+ * Modèle représentant une structure d'intervention
+ * (pompiers, SAMU, police, gendarmerie, etc.).
+ */
 class Structure extends Model
 {
     protected $fillable = [
