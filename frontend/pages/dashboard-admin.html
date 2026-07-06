@@ -9,6 +9,8 @@
     <link href="libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="libs/leaflet/leaflet.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Feuilles de style : polices, Bootstrap (UI), icônes Bootstrap, Leaflet (cartes), style perso -->
+     <!--  Thème sombre par défaut de toute la page  Bouton violet réutilisé dans les formulaires (créer agent, structure...)  -->
     <style>
         body { background: #0B0F1A; color: #E2E8F0; }
         .nav-link-dash.active { background: rgba(139,92,246,.14); border-left: 3px solid #8B5CF6; color: #fff; }
@@ -27,7 +29,8 @@
     </style>
 </head>
 <body class="dash-body">
-
+<!-- SIDEBAR : menu de navigation latéral -->
+ <!-- Chaque lien appelle afficherOnglet() avec l'événement de clic et le nom de l'onglet -->
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-logo">
@@ -48,6 +51,7 @@
         <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
     </nav>
     </div>
+    <!-- Profil de l'administrateur -->
     <!-- Ce code HTML affiche une petite section d'utilisateur dans une barre latérale (sidebar). -->
     <div class="sidebar-user">
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -57,6 +61,7 @@
                 <div style="font-size:.68rem;color:rgba(255,255,255,.4)">Administrateur</div>
             </div>
         </div>
+        <!-- Formulaire de modification d'identité -->
         <!-- Changer identité -->
         <div id="id-form" style="display:none;margin-bottom:.75rem">
             <div id="id-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
@@ -72,6 +77,7 @@
         <button onclick="toggleIdForm()" class="btn btn-outline-secondary btn-sm w-100 rounded-3 mb-2" style="font-size:.78rem">
             <i class="bi bi-person-gear me-1"></i> <span id="id-btn-label">Modifier mon nom</span>
         </button>
+        <!-- Formulaire de changement de mot de passe -->
         <!-- Changer mot de passe -->
         <div id="mdp-form" style="display:none;margin-bottom:.75rem">
             <div id="mdp-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
@@ -93,6 +99,7 @@
         </button>
     </div>
 </aside>
+<!-- Boutons de gestion du compte -->
 
 <!-- CONTENU PRINCIPAL -->
 <div class="main-content">
@@ -116,7 +123,8 @@
     </div>
 
     <div class="page-content">
-
+<!-- Contenu principal -->
+ <!-- Onglet Tableau de bord -->
         <!-- ═══ ONGLET DASHBOARD ═══ -->
         <div id="onglet-dashboard">
             <div class="row g-3 mb-4" id="stats-cards">
