@@ -91,12 +91,16 @@ class IncidentController extends Controller
     public function statistiquesPubliques(): JsonResponse
     {
         return response()->json([
+            // Nombre total d'incidents enregistrés.
             'total' => Incident::count(),
+            // Nombre d'incidents encore en cours de traitement.
             'en_cours' => Incident::whereNotIn('statut', [
                 Incident::STATUT_TERMINE,
                 Incident::STATUT_ANNULE,
             ])->count(),
+             // Nombre d'incidents déclarés aujourd'hui.
             'jour' => Incident::whereDate('created_at', today())->count(),
+            // Nombre d'agents actuellement actifs.
             'agents' => User::where('role', 'AGENT')
                 ->where('actif', true)
                 ->count(),
