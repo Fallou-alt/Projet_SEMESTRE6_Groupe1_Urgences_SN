@@ -61,7 +61,13 @@ class IncidentController extends Controller
             'id' => $incident->id,
         ], 201);
     }
-
+/**
+ * Retourne les informations nécessaires
+ * au suivi public d'un incident.
+ *
+ * @param int $id
+ * @return JsonResponse
+ */
     public function suivi(int $id): JsonResponse
     {
         $incident = Incident::findOrFail($id);
@@ -76,7 +82,12 @@ class IncidentController extends Controller
             'updated_at' => $incident->updated_at,
         ]);
     }
-
+/**
+ * Retourne les principales statistiques
+ * publiques relatives aux incidents.
+ *
+ * @return JsonResponse
+ */
     public function statistiquesPubliques(): JsonResponse
     {
         return response()->json([
