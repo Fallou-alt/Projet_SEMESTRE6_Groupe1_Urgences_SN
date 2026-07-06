@@ -10,26 +10,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Incident extends Model
 {
-<<<<<<< HEAD
+    /** Statuts possibles d'un incident. */
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS   = 'EN_COURS';
+    public const STATUT_AFFECTE    = 'AFFECTE';
+    public const STATUT_EN_ROUTE   = 'EN_ROUTE';
+    public const STATUT_SUR_PLACE  = 'SUR_PLACE';
     public const STATUT_TERMINE    = 'TERMINE';
     public const STATUT_ANNULE     = 'ANNULE';
-
-=======
-        /**
-     * Statuts possibles d'un incident.
-     */
-    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS = 'EN_COURS';
-    public const STATUT_TERMINE = 'TERMINE';
-    public const STATUT_ANNULE = 'ANNULE';
-    /**
-     * Attributs pouvant être remplis en masse.
-     *
-     * @var array<int, string>
-     */
->>>>>>> b42be2a (refactor: ajouter des constantes pour les statuts des incidents)
     protected $fillable = [
         'type_urgence', 'latitude', 'longitude', 'adresse', 'description',
         'citoyen_nom', 'citoyen_telephone', 'statut', 'commentaire',
