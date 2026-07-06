@@ -7,17 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Modèle Incident
  *
- * Représente une urgence déclarée par un citoyen.
+ * Représente une urgence déclarée par un citoyen dans le système.
+ * Chaque incident peut être assigné à une structure et à des agents.
  */
 class Incident extends Model
 {
-    /**
-     * Statuts centralisés d'un incident
-     */
-    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS   = 'EN_COURS';
-    public const STATUT_TERMINE    = 'TERMINE';
-    public const STATUT_ANNULE     = 'ANNULE';
+   /**
+ * Statuts possibles d'un incident dans le système
+ */
+public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+public const STATUT_EN_COURS = 'EN_COURS';
+public const STATUT_TERMINE = 'TERMINE';
+public const STATUT_ANNULE = 'ANNULE';
 
     /**
      * Champs autorisés en écriture
@@ -38,12 +39,12 @@ class Incident extends Model
     ];
 
     /**
-     * Structure liée à l'incident
-     */
-    public function structure()
-    {
-        return $this->belongsTo(Structure::class);
-    }
+ * Structure responsable de l'incident
+ */
+public function structure()
+{
+    return $this->belongsTo(\App\Models\Structure::class);
+}
 
     /**
      * Agent assigné
@@ -54,10 +55,10 @@ class Incident extends Model
     }
 
     /**
-     * Victimes liées à l'incident
-     */
-    public function victimes()
-    {
-        return $this->hasMany(Victime::class);
-    }
+ * Liste des victimes liées à l'incident
+ */
+public function victimes()
+{
+    return $this->hasMany(\App\Models\Victime::class);
+}
 }
