@@ -37,6 +37,7 @@
         <a href="#" class="nav-link-dash" id="nav-agents" onclick="afficherOnglet('agents')"><i class="bi bi-people"></i> Mes agents</a>
         <a href="#" class="nav-link-dash" id="nav-carte" onclick="afficherOnglet('carte')"><i class="bi bi-map"></i> Carte</a>
         <a href="#" class="nav-link-dash" id="nav-historique" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history"></i> Historique</a>
+        <a href="#" class="nav-link-dash" id="nav-rapport" onclick="afficherOnglet('rapport')"><i class="bi bi-bar-chart"></i> Rapport</a>
         <div class="sidebar-label">Général</div>
         <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
     </nav>
@@ -144,6 +145,7 @@
             <li class="nav-item"><button class="nav-link" id="btn-agents" onclick="afficherOnglet('agents')"><i class="bi bi-people me-1"></i> Agents</button></li>
             <li class="nav-item"><button class="nav-link" id="btn-carte" onclick="afficherOnglet('carte')"><i class="bi bi-map me-1"></i> Carte</button></li>
             <li class="nav-item"><button class="nav-link" id="btn-historique" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history me-1"></i> Historique</button></li>
+            <li class="nav-item"><button class="nav-link" id="btn-rapport" onclick="afficherOnglet('rapport')"><i class="bi bi-bar-chart me-1"></i> Rapport</button></li>
         </ul>
 
         <!-- Onglet : Patients -->
@@ -211,6 +213,29 @@
         </div>
 
         <!-- Onglet : Agents SAMU -->
+        <!-- Onglet : Rapport -->
+        <div id="onglet-rapport" style="display:none">
+            <div class="card-dark p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span style="font-size:.85rem;font-weight:600"><i class="bi bi-bar-chart me-2" style="color:#3B82F6"></i>Rapport de ma structure</span>
+                    <select id="rapport-annee" class="form-select form-select-sm rounded-3" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:auto;font-size:.8rem"></select>
+                    <select id="rapport-mois" class="form-select form-select-sm rounded-3" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;width:auto;font-size:.8rem">
+                        <option value="">Toute l'année</option>
+                        <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+                        <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+                        <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+                        <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+                    </select>
+                    <button onclick="chargerRapport()" class="btn-samu rounded-3" style="width:auto;padding:6px 16px">
+                        <i class="bi bi-search me-1"></i>Générer
+                    </button>
+                </div>
+            </div>
+            <div id="rapport-contenu" class="row g-3">
+                <div class="col-12 text-center py-4" style="color:rgba(255,255,255,.3)">Sélectionnez une période et cliquez sur Générer</div>
+            </div>
+        </div>
+
         <div id="onglet-agents" style="display:none">
             <div class="row g-4">
                 <div class="col-md-8">
@@ -292,6 +317,8 @@
 <script src="libs/leaflet/leaflet.js"></script>
 <script src="api.js"></script>
 <script>
+    const STATUT_SUIVANT = { EN_ATTENTE: 'AFFECTE', AFFECTE: 'EN_ROUTE', EN_ROUTE: 'SUR_PLACE', SUR_PLACE: 'TERMINE' };
+
     let patientsData = [];
     let selectedId   = null;
     let nbPrecedent  = 0;
@@ -601,7 +628,7 @@
     }
 
     function afficherOnglet(nom) {
-        ['patients','agents','carte','historique'].forEach(n => {
+        ['patients','agents','carte','historique','rapport'].forEach(n => {
             const el = document.getElementById('onglet-' + n);
             if (el) el.style.display = n === nom ? '' : 'none';
             const btn = document.getElementById('btn-' + n);
@@ -623,6 +650,63 @@
             });
         }
         if (nom === 'agents') chargerAgentsSamu();
+        if (nom === 'rapport') {
+            const sel = document.getElementById('rapport-annee');
+            if (!sel.options.length) {
+                const annee = new Date().getFullYear();
+                for (let y = annee; y >= annee - 4; y--) sel.add(new Option(y, y));
+            }
+        }
+    }
+
+    async function chargerRapport() {
+        const annee  = document.getElementById('rapport-annee').value;
+        const mois   = document.getElementById('rapport-mois').value;
+        const params = mois ? `?annee=${annee}&mois=${mois}` : `?annee=${annee}`;
+        try {
+            const r = await apiCall('/responsable/rapport' + params);
+            document.getElementById('rapport-contenu').innerHTML = `
+                <div class="col-6 col-md-3"><div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#E2E8F0">${r.total_incidents}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Total incidents</div>
+                </div></div>
+                <div class="col-6 col-md-3"><div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#86EFAC">${r.par_statut.TERMINE}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Terminés</div>
+                </div></div>
+                <div class="col-6 col-md-3"><div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#FCA5A5">${r.victimes.total}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Victimes</div>
+                </div></div>
+                <div class="col-6 col-md-3"><div class="card-dark p-3 rounded-3 text-center">
+                    <div class="stat-number" style="color:#FCD34D">${r.victimes.decede}</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Décédés</div>
+                </div></div>
+                <div class="col-md-6"><div class="card-dark p-4">
+                    <div class="fw-semibold mb-3" style="font-size:.85rem">Par type d'urgence</div>
+                    ${Object.entries(r.par_type).map(([k,v]) => `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span style="font-size:.82rem">${{incendie:'🔥 Incendie',accident:'🚗 Accident',medical:'🏥 Médical',autre:'⚠️ Autre'}[k]}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:80px;height:6px;background:rgba(255,255,255,.08);border-radius:3px">
+                                    <div style="width:${r.total_incidents ? Math.round(v/r.total_incidents*100) : 0}%;height:100%;background:#3B82F6;border-radius:3px"></div>
+                                </div>
+                                <span class="font-monospace" style="font-size:.78rem;color:#93C5FD">${v}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div></div>
+                <div class="col-md-6"><div class="card-dark p-4">
+                    <div class="fw-semibold mb-3" style="font-size:.85rem">État des victimes</div>
+                    ${[['leger','#86EFAC','Léger'],['grave','#FCD34D','Grave'],['critique','#FB923C','Critique'],['decede','#FCA5A5','Décédé'],['inconnu','#94A3B8','Inconnu']].map(([k,c,l]) => `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span style="font-size:.82rem;color:${c}">${l}</span>
+                            <span class="font-monospace" style="font-size:.82rem">${r.victimes[k]}</span>
+                        </div>
+                    `).join('')}
+                </div></div>
+            `;
+        } catch(e) { console.error(e); }
     }
 
     async function chargerAgentsSamu() {
