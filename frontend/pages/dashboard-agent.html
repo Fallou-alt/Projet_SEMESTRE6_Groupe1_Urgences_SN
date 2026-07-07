@@ -28,6 +28,7 @@
     <nav class="sidebar-nav">
         <div class="sidebar-label">Menu</div>
         <a href="#" class="nav-link-dash active" onclick="afficherOnglet('missions')"><i class="bi bi-lightning"></i> Mes missions</a>
+        <a href="#" class="nav-link-dash" onclick="afficherOnglet('carte')"><i class="bi bi-map"></i> Carte</a>
         <a href="#" class="nav-link-dash" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history"></i> Historique</a>
         <div class="sidebar-label">Général</div>
         <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
@@ -148,6 +149,16 @@
             </div>
         </div>
 
+        <!-- Onglet carte -->
+        <div id="onglet-carte" style="display:none">
+            <div class="card-dark overflow-hidden">
+                <div class="p-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
+                    <span style="font-size:.85rem;font-weight:600"><i class="bi bi-map me-2" style="color:#22C55E"></i>Carte de ma mission en cours</span>
+                </div>
+                <div id="carte-agent" style="height:520px"></div>
+            </div>
+        </div>
+
         <!-- Onglet historique -->
         <div id="onglet-historique" style="display:none">
             <div class="card-dark overflow-hidden">
@@ -196,6 +207,8 @@
     let missionsData = [];
     let selectedId   = null;
     let nbPrecedent  = -1;
+    let carteInit    = false;
+    let carteObj     = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         const user = verifierAuth('AGENT');
@@ -440,11 +453,29 @@
     }
 
     function afficherOnglet(nom) {
-        document.getElementById('onglet-missions').style.display   = nom === 'missions'   ? '' : 'none';
-        document.getElementById('onglet-historique').style.display = nom === 'historique' ? '' : 'none';
+        ['missions','carte','historique'].forEach(n => {
+            document.getElementById('onglet-' + n).style.display = n === nom ? '' : 'none';
+        });
         document.querySelectorAll('.nav-link-dash').forEach(l => l.classList.remove('active'));
         event.currentTarget.classList.add('active');
         if (nom === 'historique') chargerHistorique();
+        if (nom === 'carte') initialiserCarteAgent();
+    }
+
+    function initialiserCarteAgent() {
+        if (!carteInit) {
+            carteInit = true;
+            carteObj  = L.map('carte-agent').setView([14.6937, -17.4441], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteObj);
+        }
+        const couleurs = { incendie:'#E53935', accident:'#F59E0B', medical:'#3B82F6', autre:'#6B7280' };
+        missionsData.forEach(m => {
+            if (!m.latitude || !m.longitude) return;
+            L.circleMarker([m.latitude, m.longitude], {
+                radius: 12, color: '#fff', weight: 2,
+                fillColor: couleurs[m.type_urgence] || '#22C55E', fillOpacity: 1
+            }).addTo(carteObj).bindPopup(`<strong>Mission #${m.id}</strong><br>${m.adresse || 'GPS'}<br><em>${STATUTS_LABELS[m.statut]}</em>`);
+        });
     }
 
     function toggleIdForm() {

@@ -91,6 +91,19 @@ class AdminController extends Controller
             ], 409);
         }
 
+        // FIX : on empêche également la suppression tant que du personnel
+        // (responsables ou agents) est encore rattaché à la structure.
+        // Sinon ces utilisateurs se retrouvent avec un structure_id pointant
+        // vers une structure inexistante.
+        $personnelRattache = User::where('structure_id', $id)->count();
+
+        if ($personnelRattache > 0) {
+            return response()->json([
+                'succes'  => false,
+                'message' => "Impossible de supprimer cette structure : {$personnelRattache} membre(s) du personnel y sont rattaché(s).",
+            ], 409);
+        }
+
         $structure->delete();
         return response()->json(['succes' => true]);
     }
@@ -123,20 +136,21 @@ class AdminController extends Controller
             'structure_id' => 'required|exists:structures,id',
         ]);
 
-        $structure = Structure::findOrFail($request->structure_id);
+        // FIX : la vérification "a-t-elle déjà un responsable ?" et l'assignation
+        // doivent se faire dans la même transaction, avec verrou pessimiste sur
+        // la ligne de la structure. Sans cela, deux requêtes concurrentes peuvent
+        // toutes les deux passer le test avant qu'aucune n'ait encore écrit
+        // responsable_id, et créer chacune un responsable pour la même structure
+        // (race condition / condition de course).
+        $resultat = DB::transaction(function () use ($request) {
+            $structure = Structure::where('id', $request->structure_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // FIX : on refuse d'écraser silencieusement un responsable déjà en poste.
-        // (l'ancien responsable resterait rattaché à la structure sans y être référencé)
-        if ($structure->responsable_id) {
-            return response()->json([
-                'succes'  => false,
-                'message' => 'Cette structure a déjà un responsable assigné. Retirez-le avant d\'en assigner un nouveau.',
-            ], 422);
-        }
+            if ($structure->responsable_id) {
+                return null;
+            }
 
-        // FIX : la création de l'utilisateur et la mise à jour de la structure
-        // doivent réussir ensemble ou pas du tout.
-        $utilisateur = DB::transaction(function () use ($request) {
             $utilisateur = User::create([
                 'identifiant'  => $request->identifiant,
                 'mot_de_passe' => Hash::make($request->mot_de_passe),
@@ -146,15 +160,21 @@ class AdminController extends Controller
                 'structure_id' => $request->structure_id,
             ]);
 
-            Structure::where('id', $request->structure_id)
-                ->update(['responsable_id' => $utilisateur->id]);
+            $structure->update(['responsable_id' => $utilisateur->id]);
 
             return $utilisateur;
         });
 
+        if ($resultat === null) {
+            return response()->json([
+                'succes'  => false,
+                'message' => 'Cette structure a déjà un responsable assigné. Retirez-le avant d\'en assigner un nouveau.',
+            ], 422);
+        }
+
         return response()->json([
             'succes'      => true,
-            'responsable' => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+            'responsable' => $resultat->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
         ], 201);
     }
 
