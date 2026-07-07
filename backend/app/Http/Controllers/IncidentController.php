@@ -51,8 +51,13 @@ class IncidentController extends Controller
             'statut'       => 'EN_ATTENTE',
             'structure_id' => $structure?->id,
         ]);
+        // Retour de la réponse après création de l'incident.
+        $response = [
+            'success' => true,
+            'id' => $incident->id,
+        ];
 
-        return response()->json(['succes' => true, 'id' => $incident->id], 201);
+        return response()->json($response, 201);
     }
 
     /**
