@@ -3,32 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\Structure;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class IncidentController extends Controller
 {
-    public function declarer(Request $request)
+    /**
+     * Déclarer un nouvel incident (citoyen, sans authentification).
+     * Affectation automatique à la structure adaptée selon le type d'urgence.
+     */
+    public function declarer(Request $request): JsonResponse
     {
-        $request->validate([
-            'type_urgence' => 'required|in:incendie,accident,medical,autre',
+        $validated = $request->validate([
+            'type_urgence'      => 'required|in:incendie,accident,medical,autre',
+            'latitude'          => 'nullable|numeric',
+            'longitude'         => 'nullable|numeric',
+            'adresse'           => 'nullable|string|max:255',
+            'description'       => 'nullable|string',
+            'citoyen_nom'       => 'nullable|string|max:255',
+            'citoyen_telephone' => 'nullable|string|max:20',
         ]);
 
+        // TODO: affiner l'affectation en tenant compte de la région du citoyen
+        $typeStructure = match($request->type_urgence) {
+            'medical'  => 'samu',
+            'incendie' => 'pompiers',
+            'accident' => 'pompiers',
+            default    => null,
+        };
+
+        $structure = $typeStructure
+            ? Structure::where('type', $typeStructure)->where('actif', true)->first()
+            : Structure::where('actif', true)->first();
+
         $incident = Incident::create([
-            'type_urgence'      => $request->type_urgence,
-            'latitude'          => $request->latitude,
-            'longitude'         => $request->longitude,
-            'adresse'           => $request->adresse,
-            'description'       => $request->description,
-            'citoyen_nom'       => $request->citoyen_nom,
-            'citoyen_telephone' => $request->citoyen_telephone,
-            'statut'            => 'EN_ATTENTE',
+            ...$validated,
+            'statut'       => 'EN_ATTENTE',
+            'structure_id' => $structure?->id,
         ]);
 
         return response()->json(['succes' => true, 'id' => $incident->id], 201);
     }
 
-    public function suivi($id)
+    /**
+     * Suivi public d'un incident par son ID (page citoyen).
+     */
+    public function suivi(int $id): JsonResponse
     {
         $incident = Incident::findOrFail($id);
 
@@ -42,7 +64,10 @@ class IncidentController extends Controller
         ]);
     }
 
-    public function statistiquesPubliques()
+    /**
+     * Statistiques affichées sur la page d'accueil publique.
+     */
+    public function statistiquesPubliques(): JsonResponse
     {
         return response()->json([
             'total'    => Incident::count(),

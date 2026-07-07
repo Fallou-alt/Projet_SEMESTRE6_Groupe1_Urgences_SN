@@ -108,9 +108,22 @@
                 localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
 
                 const role = data.utilisateur.role;
-                if      (role === 'ADMIN')       window.location.href = 'dashboard-admin.html';
-                else if (role === 'RESPONSABLE') window.location.href = 'dashboard-responsable.html';
-                else if (role === 'AGENT')       window.location.href = 'dashboard-agent.html';
+                if (role === 'ADMIN') {
+                    window.location.href = 'dashboard-admin.html';
+                } else if (role === 'RESPONSABLE') {
+                    try {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur));
+                        const structure = await apiCall('/responsable/structure');
+                        window.location.href = structure.type === 'samu' ? 'dashboard-samu.html' : 'dashboard-pompiers.html';
+                        return;
+                    } catch(e) {
+                        window.location.href = 'dashboard-pompiers.html';
+                        return;
+                    }
+                } else if (role === 'AGENT') {
+                    window.location.href = 'dashboard-agent.html';
+                }
             } else {
                 throw new Error(data.message || 'Identifiant ou mot de passe incorrect.');
             }
@@ -138,9 +151,13 @@
 
     const utilisateur = getUtilisateur();
     if (utilisateur && getToken()) {
-        if      (utilisateur.role === 'ADMIN')       window.location.href = 'dashboard-admin.html';
-        else if (utilisateur.role === 'RESPONSABLE') window.location.href = 'dashboard-responsable.html';
-        else if (utilisateur.role === 'AGENT')       window.location.href = 'dashboard-agent.html';
+        if      (utilisateur.role === 'ADMIN') window.location.href = 'dashboard-admin.html';
+        else if (utilisateur.role === 'AGENT') window.location.href = 'dashboard-agent.html';
+        else if (utilisateur.role === 'RESPONSABLE') {
+            apiCall('/responsable/structure').then(s => {
+                window.location.href = s.type === 'samu' ? 'dashboard-samu.html' : 'dashboard-pompiers.html';
+            }).catch(() => { window.location.href = 'dashboard-pompiers.html'; });
+        }
     }
 </script>
 </body>

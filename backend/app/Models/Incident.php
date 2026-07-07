@@ -4,8 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle Incident.
+ * Représente une urgence déclarée par un citoyen.
+ */
 class Incident extends Model
 {
+    /** Statuts possibles d'un incident. */
+    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+    public const STATUT_AFFECTE    = 'AFFECTE';
+    public const STATUT_EN_ROUTE   = 'EN_ROUTE';
+    public const STATUT_SUR_PLACE  = 'SUR_PLACE';
+    public const STATUT_TERMINE    = 'TERMINE';
+    public const STATUT_ANNULE     = 'ANNULE';
     protected $fillable = [
         'type_urgence', 'latitude', 'longitude', 'adresse', 'description',
         'citoyen_nom', 'citoyen_telephone', 'statut', 'commentaire',
@@ -20,6 +31,12 @@ class Incident extends Model
     public function agent()
     {
         return $this->belongsTo(User::class, 'agent_id');
+    }
+
+    public function agents()
+    {
+        return $this->belongsToMany(User::class, 'incident_agents', 'incident_id', 'user_id')
+                    ->select('users.id', 'users.nom', 'users.prenom', 'users.identifiant');
     }
 
     public function victimes()
