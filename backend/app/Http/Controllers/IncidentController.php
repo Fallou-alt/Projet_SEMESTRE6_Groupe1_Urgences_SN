@@ -13,14 +13,6 @@ class IncidentController extends Controller
     /**
      * Déclarer un nouvel incident (citoyen, sans authentification).
      * Affectation automatique à la structure adaptée selon le type d'urgence.
-     * Déclarer un nouvel incident.
-     *
-     * Cette méthode reçoit les informations envoyées par un citoyen,
-     * les valide, crée un nouvel incident avec le statut
-     * "EN_ATTENTE" puis retourne une réponse JSON.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function declarer(Request $request): JsonResponse
     {
@@ -57,13 +49,6 @@ class IncidentController extends Controller
 
     /**
      * Suivi public d'un incident par son ID (page citoyen).
-     * Consulter le suivi d'un incident.
-     *
-     * Recherche un incident à partir de son identifiant
-     * puis retourne ses principales informations.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function suivi(int $id): JsonResponse
     {
@@ -81,12 +66,6 @@ class IncidentController extends Controller
 
     /**
      * Statistiques affichées sur la page d'accueil publique.
-     * Retourner les statistiques publiques.
-     *
-     * Ces statistiques peuvent être utilisées sur
-     * la page d'accueil ou un tableau de bord public.
-     *
-     * @return JsonResponse
      */
     public function statistiquesPubliques(): JsonResponse
     {
