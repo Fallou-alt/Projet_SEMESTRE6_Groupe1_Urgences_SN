@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 /**
- * Modèle représentant une structure d'intervention
+ * Représente une structure d'intervention du système
  * (pompiers, SAMU, police, gendarmerie, etc.).
  */
 class Structure extends Model
 {
+    /**
+ * Liste des attributs pouvant être assignés en masse.
+ */
     protected $fillable = [
         'nom', 'sigle', 'type', 'region', 'departement', 'commune',
         'adresse', 'telephone', 'email', 'responsable_id', 'actif',
