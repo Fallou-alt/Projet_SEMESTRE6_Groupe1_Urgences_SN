@@ -11,10 +11,8 @@ use Illuminate\Http\JsonResponse;
 class IncidentController extends Controller
 {
     /**
-<<<<<<< HEAD
      * Déclarer un nouvel incident (citoyen, sans authentification).
      * Affectation automatique à la structure adaptée selon le type d'urgence.
-=======
      * Déclarer un nouvel incident.
      *
      * Cette méthode reçoit les informations envoyées par un citoyen,
@@ -23,7 +21,6 @@ class IncidentController extends Controller
      *
      * @param Request $request
      * @return JsonResponse
->>>>>>> 1026d86 (refactor: ajouter le typage des méthodes du contrôleur Incident)
      */
     public function declarer(Request $request): JsonResponse
     {
@@ -59,9 +56,7 @@ class IncidentController extends Controller
     }
 
     /**
-<<<<<<< HEAD
      * Suivi public d'un incident par son ID (page citoyen).
-=======
      * Consulter le suivi d'un incident.
      *
      * Recherche un incident à partir de son identifiant
@@ -69,7 +64,6 @@ class IncidentController extends Controller
      *
      * @param int $id
      * @return JsonResponse
->>>>>>> 1026d86 (refactor: ajouter le typage des méthodes du contrôleur Incident)
      */
     public function suivi(int $id): JsonResponse
     {
@@ -86,16 +80,13 @@ class IncidentController extends Controller
     }
 
     /**
-<<<<<<< HEAD
      * Statistiques affichées sur la page d'accueil publique.
-=======
      * Retourner les statistiques publiques.
      *
      * Ces statistiques peuvent être utilisées sur
      * la page d'accueil ou un tableau de bord public.
      *
      * @return JsonResponse
->>>>>>> 1026d86 (refactor: ajouter le typage des méthodes du contrôleur Incident)
      */
     public function statistiquesPubliques(): JsonResponse
     {
