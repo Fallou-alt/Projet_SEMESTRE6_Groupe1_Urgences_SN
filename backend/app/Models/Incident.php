@@ -63,6 +63,11 @@ class Incident extends Model
      */
     public function agent()
     {
+        /**
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
         return $this->belongsTo(User::class, 'agent_id');
     }
 
