@@ -78,7 +78,7 @@ class AdminController extends Controller
     {
         $structure = Structure::findOrFail($id);
 
-        // FIX : on empêche la suppression tant qu'il existe des incidents
+        // On empêche la suppression tant qu'il existe des incidents
         // non terminés/non annulés rattachés à la structure.
         $incidentsActifs = Incident::where('structure_id', $id)
             ->whereNotIn('statut', ['TERMINE', 'ANNULE'])
@@ -91,7 +91,7 @@ class AdminController extends Controller
             ], 409);
         }
 
-        // FIX : on empêche également la suppression tant que du personnel
+        // On empêche également la suppression tant que du personnel
         // (responsables ou agents) est encore rattaché à la structure.
         // Sinon ces utilisateurs se retrouvent avec un structure_id pointant
         // vers une structure inexistante.
@@ -136,12 +136,13 @@ class AdminController extends Controller
             'structure_id' => 'required|exists:structures,id',
         ]);
 
-        // FIX : la vérification "a-t-elle déjà un responsable ?" et l'assignation
-        // doivent se faire dans la même transaction, avec verrou pessimiste sur
-        // la ligne de la structure. Sans cela, deux requêtes concurrentes peuvent
-        // toutes les deux passer le test avant qu'aucune n'ait encore écrit
-        // responsable_id, et créer chacune un responsable pour la même structure
-        // (race condition / condition de course).
+        // La vérification "a-t-elle déjà un responsable ?" et l'assignation
+        // se font dans la même transaction, avec verrou pessimiste sur
+        // la ligne de la structure. Ainsi, si deux requêtes concurrentes
+        // arrivent en même temps pour la même structure, la deuxième
+        // attend que la première ait fini avant de relire l'état à jour de
+        // responsable_id, ce qui évite d'assigner deux responsables à la
+        // même structure.
         $resultat = DB::transaction(function () use ($request) {
             $structure = Structure::where('id', $request->structure_id)
                 ->lockForUpdate()
@@ -226,8 +227,9 @@ class AdminController extends Controller
         ]);
 
         $annee   = (int) $request->get('annee', date('Y'));
-        // FIX : cast explicite en entier (ou null), pour la même cohérence
-        // que $annee — sinon $mois restait une string dans le JSON de sortie.
+        // Cast explicite en entier (ou null), pour que le mois soit
+        // toujours un vrai entier (ou null) dans le JSON de sortie, et
+        // jamais une chaîne de caractères.
         $mois    = $request->filled('mois') ? (int) $request->get('mois') : null;
         $requete = Incident::whereYear('created_at', $annee);
 
@@ -286,14 +288,21 @@ class AdminController extends Controller
             ->with(['agent', 'structure'])
             ->latest()->get();
 
-        $csv = "ID,Type,Statut,Adresse,Citoyen,Telephone,Date,Structure\n";
+        // Le BOM UTF-8 (\xEF\xBB\xBF) est placé en tête du fichier pour
+        // qu'Excel, qui suppose de l'ANSI/Latin-1 par défaut, reconnaisse
+        // l'encodage UTF-8 et affiche correctement les caractères accentués
+        // (noms, adresses, structures...) au lieu de les afficher mal
+        // (ex: "Ã©" au lieu de "é").
+        $csv = "\xEF\xBB\xBF";
+        $csv .= "ID,Type,Statut,Adresse,Citoyen,Telephone,Date,Structure\n";
 
         foreach ($incidents as $incident) {
             $structure = $incident->structure?->nom ?? 'Non assignée';
             $csv .= implode(',', [
                 $incident->id,
-                // FIX : ces champs passent maintenant aussi par la sécurisation CSV,
-                // par cohérence et par précaution si les valeurs autorisées évoluent un jour.
+                // Ces champs passent tous par la sécurisation CSV, par
+                // cohérence et par précaution si les valeurs autorisées
+                // évoluent un jour.
                 '"' . $this->champCsvSecurise($incident->type_urgence) . '"',
                 '"' . $this->champCsvSecurise($incident->statut) . '"',
                 '"' . $this->champCsvSecurise($incident->adresse) . '"',
@@ -305,7 +314,11 @@ class AdminController extends Controller
         }
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
+            // Le charset=UTF-8 est précisé explicitement dans le
+            // Content-Type, en complément du BOM, pour que tout client
+            // HTTP ou tableur qui lit l'en-tête sache que le corps est
+            // bien encodé en UTF-8.
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=bilan_urgences_{$annee}.csv",
         ]);
     }
