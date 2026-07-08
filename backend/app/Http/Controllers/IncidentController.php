@@ -67,14 +67,16 @@ class IncidentController extends Controller
     {
         $incident = Incident::findOrFail($id);
 
-        return response()->json([
-            'id'           => $incident->id,
-            'type_urgence' => $incident->type_urgence,
-            'statut'       => $incident->statut,
-            'adresse'      => $incident->adresse,
-            'cree_le'      => $incident->created_at,
-            'mis_a_jour'   => $incident->updated_at,
-        ]);
+       $data = [
+    'id'           => $incident->id,
+    'type_urgence' => $incident->type_urgence,
+    'statut'       => $incident->statut,
+    'adresse'      => $incident->adresse,
+    'cree_le'      => $incident->created_at,
+    'mis_a_jour'   => $incident->updated_at,
+];
+
+return response()->json($data);
     }
 
     /**
