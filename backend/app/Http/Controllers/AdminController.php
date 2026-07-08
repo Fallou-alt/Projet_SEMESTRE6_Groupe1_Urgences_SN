@@ -175,7 +175,10 @@ class AdminController extends Controller
 
         return response()->json([
             'succes'      => true,
-            'responsable' => $resultat->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+            // Model::only() n'existe pas sur Eloquent Model (c'est une méthode
+            // de Request/Collection) : on passe donc par collect() pour
+            // pouvoir filtrer les champs à renvoyer sans exposer mot_de_passe.
+            'responsable' => collect($resultat)->only(['id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id']),
         ], 201);
     }
 
@@ -200,7 +203,10 @@ class AdminController extends Controller
 
         return response()->json([
             'succes' => true,
-            'agent'  => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+            // Model::only() n'existe pas sur Eloquent Model (c'est une méthode
+            // de Request/Collection) : on passe donc par collect() pour
+            // pouvoir filtrer les champs à renvoyer sans exposer mot_de_passe.
+            'agent'  => collect($utilisateur)->only(['id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id']),
         ], 201);
     }
 
