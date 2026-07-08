@@ -84,11 +84,13 @@ return response()->json($data);
      */
     public function statistiquesPubliques(): JsonResponse
     {
-        return response()->json([
+        $statistiques = [
             'total'    => Incident::count(),
             'en_cours' => Incident::whereNotIn('statut', ['TERMINE', 'ANNULE'])->count(),
             'jour'     => Incident::whereDate('created_at', today())->count(),
             'agents'   => User::where('role', 'AGENT')->where('actif', true)->count(),
-        ]);
+        ];
+
+return response()->json($statistiques);
     }
 }
