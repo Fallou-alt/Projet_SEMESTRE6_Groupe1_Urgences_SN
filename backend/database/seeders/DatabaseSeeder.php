@@ -38,11 +38,11 @@ class DatabaseSeeder extends Seeder
             ['nom' => 'Marine Nationale',           'sigle' => 'MN',   'type' => 'marine',            'region' => 'Dakar'],
             ['nom' => 'Protection Civile',          'sigle' => 'PC',   'type' => 'protection_civile', 'region' => 'Dakar'],
         ];
-
+        
         foreach ($structuresData as $s) {
             Structure::firstOrCreate(['sigle' => $s['sigle']], $s);
         }
-
+         // Récupération des principales structures pour les associations suivantes.
         $pompiers = Structure::where('sigle', 'SPD')->first();
         $samu     = Structure::where('sigle', 'SAMU')->first();
         // Création des comptes responsables des différentes structures.
@@ -118,7 +118,7 @@ class DatabaseSeeder extends Seeder
                 'statut' => 'TERMINE', 'structure_id' => $pompiers?->id,
             ],
         ];
-
+         // Insertion des incidents de démonstration dans la base de données. 
         foreach ($incidentsData as $i) {
             Incident::create($i);
         }
