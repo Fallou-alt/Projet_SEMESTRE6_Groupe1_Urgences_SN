@@ -28,6 +28,9 @@ class Incident extends Model
      * automatiquement lors de la création ou de
      * la mise à jour d'un incident.
      */
+    /**
+ * Attributs autorisés pour l'assignation de masse.
+ */
     protected $fillable = [
         'type_urgence',
         'latitude',
