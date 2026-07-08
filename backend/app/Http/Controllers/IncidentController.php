@@ -10,10 +10,18 @@ use Illuminate\Http\JsonResponse;
 
 class IncidentController extends Controller
 {
-    /**
-     * Déclarer un nouvel incident (citoyen, sans authentification).
-     * Affectation automatique à la structure adaptée selon le type d'urgence.
-     */
+/**
+ * Déclare un nouvel incident dans le système.
+ *
+ * Cette méthode :
+ * - valide les informations envoyées ;
+ * - détermine automatiquement la structure compétente ;
+ * - crée l'incident avec un statut initial ;
+ * - retourne l'identifiant du nouvel incident.
+ *
+ * @param Request $request Requête contenant les données du citoyen.
+ * @return JsonResponse Réponse JSON après création.
+ */
     public function declarer(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -43,8 +51,13 @@ class IncidentController extends Controller
             'statut'       => 'EN_ATTENTE',
             'structure_id' => $structure?->id,
         ]);
+        // Retour de la réponse après création de l'incident.
+        $response = [
+            'success' => true,
+            'id' => $incident->id,
+        ];
 
-        return response()->json(['succes' => true, 'id' => $incident->id], 201);
+        return response()->json($response, 201);
     }
 
     /**
