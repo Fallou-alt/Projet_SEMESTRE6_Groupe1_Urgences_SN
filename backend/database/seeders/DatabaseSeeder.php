@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     /**
- * Insére les données de base requises pour le fonctionnement
-  * de l'application.
- */
+   * Insère les données de base requises
+   * pour le fonctionnement de l'application.
+   */
     public function run(): void
     {
         // ─── Admin plateforme ─────────────────────────────────────────────────
