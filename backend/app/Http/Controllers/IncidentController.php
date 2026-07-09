@@ -67,26 +67,35 @@ class IncidentController extends Controller
     {
         $incident = Incident::findOrFail($id);
 
-        return response()->json([
-            'id'           => $incident->id,
-            'type_urgence' => $incident->type_urgence,
-            'statut'       => $incident->statut,
-            'adresse'      => $incident->adresse,
-            'cree_le'      => $incident->created_at,
-            'mis_a_jour'   => $incident->updated_at,
-        ]);
+       $data = [
+    'id'           => $incident->id,
+    'type_urgence' => $incident->type_urgence,
+    'statut'       => $incident->statut,
+    'adresse'      => $incident->adresse,
+    'cree_le'      => $incident->created_at,
+    'mis_a_jour'   => $incident->updated_at,
+];
+
+return response()->json($data);
     }
 
-    /**
-     * Statistiques affichées sur la page d'accueil publique.
-     */
+   /**
+ * Retourne les statistiques publiques du système.
+ *
+ * Ces informations sont utilisées pour alimenter
+ * le tableau de bord accessible aux citoyens.
+ */
     public function statistiquesPubliques(): JsonResponse
     {
-        return response()->json([
+        // Construction des statistiques retournées à l'interface publique.
+        $statistiques = [
             'total'    => Incident::count(),
             'en_cours' => Incident::whereNotIn('statut', ['TERMINE', 'ANNULE'])->count(),
             'jour'     => Incident::whereDate('created_at', today())->count(),
             'agents'   => User::where('role', 'AGENT')->where('actif', true)->count(),
-        ]);
+        ];
+
+return response()->json($statistiques);
+
     }
 }

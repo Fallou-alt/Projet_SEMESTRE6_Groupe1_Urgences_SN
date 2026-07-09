@@ -28,6 +28,9 @@ class Incident extends Model
      * automatiquement lors de la création ou de
      * la mise à jour d'un incident.
      */
+    /**
+ * Attributs autorisés pour l'assignation de masse.
+ */
     protected $fillable = [
         'type_urgence',
         'latitude',
@@ -54,20 +57,22 @@ class Incident extends Model
     }
 
 
-    /**
-     * Retourne l'agent responsable
-     * de la prise en charge de l'incident.
-     */
     public function agent()
     {
+        /**
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
         return $this->belongsTo(User::class, 'agent_id');
     }
 
 
     /**
-     * Retourne la liste des agents
-     * affectés à l'incident.
-     */
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
     public function agents()
     {
         return $this->belongsToMany(
