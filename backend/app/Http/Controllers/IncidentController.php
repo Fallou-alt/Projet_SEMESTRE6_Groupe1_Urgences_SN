@@ -87,6 +87,7 @@ return response()->json($data);
  */
     public function statistiquesPubliques(): JsonResponse
     {
+        // Construction des statistiques retournées à l'interface publique.
         $statistiques = [
             'total'    => Incident::count(),
             'en_cours' => Incident::whereNotIn('statut', ['TERMINE', 'ANNULE'])->count(),
