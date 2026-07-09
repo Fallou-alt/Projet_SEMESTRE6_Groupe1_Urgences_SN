@@ -79,9 +79,12 @@ class IncidentController extends Controller
 return response()->json($data);
     }
 
-    /**
-     * Statistiques affichées sur la page d'accueil publique.
-     */
+   /**
+ * Retourne les statistiques publiques du système.
+ *
+ * Ces informations sont utilisées pour alimenter
+ * le tableau de bord accessible aux citoyens.
+ */
     public function statistiquesPubliques(): JsonResponse
     {
         $statistiques = [
@@ -92,5 +95,6 @@ return response()->json($data);
         ];
 
 return response()->json($statistiques);
+
     }
 }
