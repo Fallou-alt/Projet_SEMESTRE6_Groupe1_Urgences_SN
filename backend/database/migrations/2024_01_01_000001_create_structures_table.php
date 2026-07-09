@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+
     public function up(): void
     {
+         // Création de la table des structures d'intervention
         Schema::create('structures', function (Blueprint $table) {
             $table->id();
             // Informations d'identification de la structure
