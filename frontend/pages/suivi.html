@@ -226,6 +226,7 @@
         { statut: 'TERMINE',   label: 'Intervention terminée',sub: 'L\'intervention est clôturée',             icon: 'bi-shield-check' },
     ];
 
+    // ordre des statuts pour la progression de la timeline
     const ORDRE = ETAPES.map(e => e.statut);
 
     const MESSAGES = {
@@ -250,10 +251,11 @@
         ANNULE:     { bg: 'rgba(107,114,128,.1)', color: '#6B7280',  border: 'rgba(107,114,128,.25)' },
     };
 
-    // Récupérer l'ID depuis l'URL
+    // récupère l'ID de l'incident depuis l'URL (?id=...)
     const params = new URLSearchParams(window.location.search);
     const incidentId = params.get('id');
 
+    // recherche manuelle par saisie d'un numéro d'incident
     function rechercherParId() {
         const val = document.getElementById('input-id-recherche').value.trim();
         if (val) window.location.href = 'suivi.html?id=' + val;
@@ -263,6 +265,7 @@
     });
     if (incidentId) document.getElementById('input-id-recherche').value = incidentId;
 
+    // rafraîchissement automatique toutes les 10 secondes
     if (!incidentId) {
         document.getElementById('zone-chargement').classList.add('d-none');
     } else {
@@ -276,6 +279,7 @@
         }, 10000);
     }
 
+    // charge les données de l'incident depuis l'API et met à jour l'affichage
     async function chargerSuivi() {
         try {
             const data = await apiCall(`/incidents/${incidentId}/suivi`);

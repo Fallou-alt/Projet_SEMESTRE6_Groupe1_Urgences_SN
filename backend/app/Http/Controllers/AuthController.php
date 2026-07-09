@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    // connexion des utilisateurs (admin, responsable, agent)
+    // authentification : admin, responsable, agent
     public function connexion(Request $request)
     {
         $request->validate([
@@ -19,8 +19,11 @@ class AuthController extends Controller
 
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
 
-        // vérifier que le compte existe et que le mdp est bon
-        if (!$utilisateur || !Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe)) {
+        // Hash::check sur un hash factice si l'utilisateur n'existe pas : évite le timing attack
+        $hashFactice = '$2y$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
+        $mdpValide   = Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe ?? $hashFactice);
+
+        if (!$utilisateur || !$mdpValide) {
             return response()->json(['message' => 'Identifiant ou mot de passe incorrect.'], 401);
         }
 
@@ -28,7 +31,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
-        // je génère un token simple, pas besoin de JWT pour ce projet
+        // token aléatoire 60 chars, pas besoin de JWT ici
         $token = Str::random(60);
         $utilisateur->update(['token' => $token]);
 
@@ -70,7 +73,7 @@ class AuthController extends Controller
         return response()->json(['succes' => true]);
     }
 
-    // permet à n'importe quel utilisateur connecté de changer son nom/prénom
+    // modification nom/prénom pour tout utilisateur connecté
     public function modifierProfil(Request $request)
     {
         $request->validate([

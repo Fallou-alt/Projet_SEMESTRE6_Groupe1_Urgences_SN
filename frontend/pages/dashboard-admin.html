@@ -9,6 +9,8 @@
     <link href="libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="libs/leaflet/leaflet.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Feuilles de style : polices, Bootstrap (UI), icônes Bootstrap, Leaflet (cartes), style perso -->
+     <!--  Thème sombre par défaut de toute la page  Bouton violet réutilisé dans les formulaires (créer agent, structure...)  -->
     <style>
         body { background: #0B0F1A; color: #E2E8F0; }
         .nav-link-dash.active { background: rgba(139,92,246,.14); border-left: 3px solid #8B5CF6; color: #fff; }
@@ -17,7 +19,7 @@
         .badge-role-admin       { background: rgba(139,92,246,.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
         .badge-role-responsable  { background: rgba(229,57,53,.2);  color: #FCA5A5; border: 1px solid rgba(229,57,53,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
         .badge-role-agent        { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
-        /* CORRECTION : classes manquantes pour les badges de statut des incidents (utilisées dans le JS via badge-${statut.toLowerCase()}) */
+        /* Styles des badges de statut affichés pour chaque incident (classe générée dynamiquement via badge-${statut.toLowerCase()}) */
         .badge-en_attente { background: rgba(239,68,68,.2);  color: #FCA5A5; border: 1px solid rgba(239,68,68,.3);  border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
         .badge-affecte    { background: rgba(59,130,246,.2); color: #93C5FD; border: 1px solid rgba(59,130,246,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
         .badge-en_route   { background: rgba(245,158,11,.2); color: #FCD34D; border: 1px solid rgba(245,158,11,.3); border-radius: 50px; padding: 2px 10px; font-size: .72rem; }
@@ -27,11 +29,12 @@
     </style>
 </head>
 <body class="dash-body">
-
+<!-- SIDEBAR : menu de navigation latéral -->
+ <!-- Chaque lien appelle afficherOnglet() avec l'événement de clic et le nom de l'onglet -->
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-logo">
-        <div class="sidebar-logo-icon"><i class="bi bi-fire text-white" style="font-size:1rem"></i></div>
+        <div class="sidebar-logo-icon"><img src="images/logo.png" style="width:1.2rem;height:1.2rem;object-fit:contain"></div>
         <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.95rem;color:#fff">
             Urgences <span style="color:#E53935">SN</span>
         </span>
@@ -48,6 +51,7 @@
         <a href="index.html" class="nav-link-dash"><i class="bi bi-house"></i> Accueil public</a>
     </nav>
     </div>
+    <!-- Profil de l'administrateur -->
     <!-- Ce code HTML affiche une petite section d'utilisateur dans une barre latérale (sidebar). -->
     <div class="sidebar-user">
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -57,6 +61,7 @@
                 <div style="font-size:.68rem;color:rgba(255,255,255,.4)">Administrateur</div>
             </div>
         </div>
+        <!-- Formulaire de modification d'identité -->
         <!-- Changer identité -->
         <div id="id-form" style="display:none;margin-bottom:.75rem">
             <div id="id-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
@@ -72,6 +77,7 @@
         <button onclick="toggleIdForm()" class="btn btn-outline-secondary btn-sm w-100 rounded-3 mb-2" style="font-size:.78rem">
             <i class="bi bi-person-gear me-1"></i> <span id="id-btn-label">Modifier mon nom</span>
         </button>
+        <!-- Formulaire de changement de mot de passe -->
         <!-- Changer mot de passe -->
         <div id="mdp-form" style="display:none;margin-bottom:.75rem">
             <div id="mdp-msg" class="rounded-2 p-2 mb-2 d-none" style="font-size:.75rem"></div>
@@ -93,6 +99,7 @@
         </button>
     </div>
 </aside>
+<!-- Boutons de gestion du compte -->
 
 <!-- CONTENU PRINCIPAL -->
 <div class="main-content">
@@ -116,7 +123,8 @@
     </div>
 
     <div class="page-content">
-
+<!-- Contenu principal -->
+ <!-- Onglet Tableau de bord -->
         <!-- ═══ ONGLET DASHBOARD ═══ -->
         <div id="onglet-dashboard">
             <div class="row g-3 mb-4" id="stats-cards">
@@ -434,6 +442,18 @@
     let tousStructures = [];  // cache des structures (utilisé par l'onglet Structures et le formulaire agent)
     let marqueursCarte = [];  // marqueurs actuellement affichés sur la carte
 
+    // Échappe les caractères spéciaux HTML pour afficher en toute sécurité, via innerHTML,
+    // des textes saisis par des utilisateurs (citoyens, structures, etc.)
+    function echap(txt) {
+        if (txt === null || txt === undefined) return '';
+        return String(txt)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Point d'entrée : vérifie les droits admin puis initialise l'horloge et le tableau de bord
     document.addEventListener('DOMContentLoaded', () => {
         const utilisateur = verifierAuth('ADMIN');
@@ -468,7 +488,7 @@
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
-                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td style="color:rgba(255,255,255,.5)">${echap(i.adresse) || '—'}</td>
                     <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                 </tr>
@@ -495,8 +515,8 @@
                 <tr>
                     <td class="font-monospace" style="color:rgba(255,255,255,.3);font-size:.75rem">${i.id}</td>
                     <td>${EMOJIS[i.type_urgence] || '⚠️'} ${i.type_urgence}</td>
-                    <td style="color:rgba(255,255,255,.6)">${i.citoyen_nom || '—'}</td>
-                    <td style="color:rgba(255,255,255,.5)">${i.adresse || '—'}</td>
+                    <td style="color:rgba(255,255,255,.6)">${echap(i.citoyen_nom) || '—'}</td>
+                    <td style="color:rgba(255,255,255,.5)">${echap(i.adresse) || '—'}</td>
                     <td><span class="badge-${i.statut.toLowerCase()}">${STATUTS_LABELS[i.statut] || i.statut}</span></td>
                     <td style="color:rgba(255,255,255,.35);font-size:.78rem">${new Date(i.created_at).toLocaleString('fr-FR')}</td>
                     <td>
@@ -504,6 +524,10 @@
                                 style="background:rgba(59,130,246,.15);color:#93C5FD;border:1px solid rgba(59,130,246,.25);font-size:.72rem">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <button onclick="supprimerIncident(${i.id})" class="btn btn-sm rounded-2"
+                                style="background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25);font-size:.72rem">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -529,15 +553,15 @@
                 : data.map(s => `
                     <tr>
                         <td>
-                            <div class="fw-semibold">${s.nom}</div>
-                            ${s.sigle ? `<div style="font-size:.72rem;color:rgba(255,255,255,.35)">${s.sigle}</div>` : ''}
+                            <div class="fw-semibold">${echap(s.nom)}</div>
+                            ${s.sigle ? `<div style="font-size:.72rem;color:rgba(255,255,255,.35)">${echap(s.sigle)}</div>` : ''}
                         </td>
                         <td>${TYPES[s.type] || '🏢'} ${s.type}</td>
                         <td>
-                            ${s.responsable_nom ? `<div style="font-size:.82rem">${s.responsable_nom}</div>` : ''}
-                            ${s.responsable_titre ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4)">${s.responsable_titre}</div>` : (!s.responsable_nom ? '<span style="color:rgba(255,255,255,.25)">—</span>' : '')}
+                            ${s.responsable_nom ? `<div style="font-size:.82rem">${echap(s.responsable_nom)}</div>` : ''}
+                            ${s.responsable_titre ? `<div style="font-size:.72rem;color:rgba(255,255,255,.4)">${echap(s.responsable_titre)}</div>` : (!s.responsable_nom ? '<span style="color:rgba(255,255,255,.25)">—</span>' : '')}
                         </td>
-                        <td style="color:rgba(255,255,255,.5);font-size:.8rem">${s.adresse || '—'}</td>
+                        <td style="color:rgba(255,255,255,.5);font-size:.8rem">${echap(s.adresse) || '—'}</td>
                         <td style="color:rgba(255,255,255,.5)">${s.telephone || '—'}</td>
                         <td><span style="font-size:.78rem;color:${s.actif ? '#86EFAC' : '#FCA5A5'}">${s.actif ? '● Active' : '○ Inactive'}</span></td>
                         <td class="d-flex gap-1">
@@ -555,7 +579,7 @@
             // Reconstruit le select "Structure" du formulaire de création d'agent avec les données à jour
             const sel = document.getElementById('a-structure');
             sel.innerHTML = '<option value="">— Aucune —</option>' +
-                data.map(s => `<option value="${s.id}">${s.nom}</option>`).join('');
+                data.map(s => `<option value="${s.id}">${echap(s.nom)}</option>`).join('');
         } catch(e) { console.error(e); }
     }
 
@@ -574,7 +598,7 @@
         document.getElementById('st-tel').value          = s.telephone || '';
         document.getElementById('st-email').value        = s.email || '';
         document.getElementById('st-form-titre').innerHTML =
-            '<i class="bi bi-pencil me-2" style="color:#8B5CF6"></i>Modifier : ' + s.nom;
+            '<i class="bi bi-pencil me-2" style="color:#8B5CF6"></i>Modifier : ' + echap(s.nom);
         document.getElementById('st-btn-save').innerHTML = '<i class="bi bi-check-circle me-1"></i> Enregistrer';
         document.getElementById('st-btn-cancel').classList.remove('d-none');
         document.getElementById('msg-structure').className = 'rounded-3 p-2 mb-3 d-none';
@@ -727,18 +751,24 @@
         a.click();
     }
 
-    // Charge la liste du personnel (agents et responsables) pour l'onglet Personnel
+    // Charge la liste du personnel pour l'onglet Personnel : les responsables et les agents
+    // sont exposés par deux endpoints distincts côté API, on fusionne donc les deux réponses
+    // pour obtenir la liste complète affichée dans le tableau.
     async function chargerAgents() {
         try {
-            const data = await apiCall('/admin/responsables');
+            const [responsables, agents] = await Promise.all([
+                apiCall('/admin/responsables'),
+                apiCall('/admin/agents')
+            ]);
+            const data = [...responsables, ...agents];
             document.getElementById('tbody-agents').innerHTML = data.length === 0
                 ? '<tr><td colspan="6" class="text-center py-4" style="color:rgba(255,255,255,.3)">Aucun membre du personnel</td></tr>'
                 : data.map(a => `
                 <tr>
-                    <td class="fw-semibold">${a.prenom} ${a.nom}</td>
-                    <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${a.identifiant}</td>
+                    <td class="fw-semibold">${echap(a.prenom)} ${echap(a.nom)}</td>
+                    <td class="font-monospace" style="color:rgba(255,255,255,.5);font-size:.8rem">${echap(a.identifiant)}</td>
                     <td><span class="badge-role-${a.role.toLowerCase()}">${a.role}</span></td>
-                    <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? a.structure.nom : '—'}</td>
+                    <td style="color:rgba(255,255,255,.4);font-size:.8rem">${a.structure ? echap(a.structure.nom) : '—'}</td>
                     <td>
                         <span style="font-size:.78rem;color:${a.actif ? '#86EFAC' : '#FCA5A5'}">
                             ${a.actif ? '● Actif' : '○ Inactif'}
@@ -789,7 +819,11 @@
                 msg.textContent = `✅ ${role === 'AGENT' ? 'Agent' : 'Responsable'} créé avec succès.`;
                 msg.className = 'rounded-3 p-2 mb-3';
                 msg.style.cssText = 'background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)';
+                // Formulaire remis à zéro (champs texte, rôle et structure) pour permettre
+                // d'enchaîner une nouvelle création sans confusion avec la précédente
                 ['a-prenom','a-nom','a-identifiant','a-mdp'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('a-role').value = 'RESPONSABLE';
+                document.getElementById('a-structure').value = '';
                 chargerAgents();
             } else {
                 throw new Error(data.message || 'Erreur');
@@ -811,7 +845,7 @@
         evenement.currentTarget.classList.add('active');
 
         if (nom === 'incidents')  chargerIncidents();
-        if (nom === 'agents')      chargerAgents();
+        if (nom === 'agents')      { chargerAgents(); chargerStructures(); }
         if (nom === 'structures')  chargerStructures();
         if (nom === 'bilan')       {
             const sel = document.getElementById('bilan-annee');
@@ -827,20 +861,20 @@
         }
     }
 
-    // Crée la carte Leaflet et place un marqueur pour chaque incident géolocalisé
+    // Crée la carte Leaflet et place un marqueur pour chaque incident géolocalisé.
+    // Fonction appelée une seule fois par session (protégée par carteInit dans afficherOnglet),
+    // marqueursCarte part donc toujours d'un tableau vide au moment de la construction des marqueurs.
     function initialiserCarte() {
         carteInit = true;
         const carte = L.map('carte-admin').setView([14.6937, -17.4441], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carte);
         const couleurs = { incendie:'#E53935', accident:'#F59E0B', medical:'#3B82F6', autre:'#6B7280' };
-        marqueursCarte.forEach(m => m.remove());
-        marqueursCarte = [];
         tousIncidents.forEach(i => {
             if (!i.latitude || !i.longitude) return;
             const m = L.circleMarker([i.latitude, i.longitude], {
                 radius: 10, color: '#fff', weight: 2,
                 fillColor: couleurs[i.type_urgence] || '#6B7280', fillOpacity: 1
-            }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${i.adresse || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
+            }).addTo(carte).bindPopup(`<strong>#${i.id} | ${i.type_urgence}</strong><br>${echap(i.adresse) || 'GPS'}<br><em>${STATUTS_LABELS[i.statut]}</em>`);
             marqueursCarte.push(m);
         });
     }

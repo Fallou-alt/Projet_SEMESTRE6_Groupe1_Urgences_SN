@@ -4,54 +4,95 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 /**
  * Modèle Incident.
+ *
  * Représente une urgence déclarée par un citoyen.
  */
 class Incident extends Model
 {
-<<<<<<< HEAD
-    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS   = 'EN_COURS';
-    public const STATUT_TERMINE    = 'TERMINE';
-    public const STATUT_ANNULE     = 'ANNULE';
-
-=======
-        /**
+    /**
      * Statuts possibles d'un incident.
      */
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
-    public const STATUT_EN_COURS = 'EN_COURS';
-    public const STATUT_TERMINE = 'TERMINE';
-    public const STATUT_ANNULE = 'ANNULE';
+    public const STATUT_AFFECTE    = 'AFFECTE';
+    public const STATUT_EN_ROUTE   = 'EN_ROUTE';
+    public const STATUT_SUR_PLACE  = 'SUR_PLACE';
+    public const STATUT_TERMINE    = 'TERMINE';
+    public const STATUT_ANNULE     = 'ANNULE';
+
+
     /**
-     * Attributs pouvant être remplis en masse.
-     *
-     * @var array<int, string>
+     * Liste des attributs pouvant être remplis
+     * automatiquement lors de la création ou de
+     * la mise à jour d'un incident.
      */
->>>>>>> b42be2a (refactor: ajouter des constantes pour les statuts des incidents)
+    /**
+ * Attributs autorisés pour l'assignation de masse.
+ */
     protected $fillable = [
-        'type_urgence', 'latitude', 'longitude', 'adresse', 'description',
-        'citoyen_nom', 'citoyen_telephone', 'statut', 'commentaire',
-        'date_intervention', 'structure_id', 'agent_id',
+        'type_urgence',
+        'latitude',
+        'longitude',
+        'adresse',
+        'description',
+        'citoyen_nom',
+        'citoyen_telephone',
+        'statut',
+        'commentaire',
+        'date_intervention',
+        'structure_id',
+        'agent_id',
     ];
 
+
+    /**
+     * Retourne la structure
+     * chargée de traiter l'incident.
+     */
     public function structure()
     {
-        return $this->belongsTo(Structure::class);
+        return $this->belongsTo(\App\Models\Structure::class);
     }
+
 
     public function agent()
     {
+        /**
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
         return $this->belongsTo(User::class, 'agent_id');
     }
 
+
+    /**
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
     public function agents()
     {
-        return $this->belongsToMany(User::class, 'incident_agents', 'incident_id', 'user_id')
-                    ->select('users.id', 'users.nom', 'users.prenom', 'users.identifiant');
+        return $this->belongsToMany(
+            User::class,
+            'incident_agents',
+            'incident_id',
+            'user_id'
+        )->select(
+            'users.id',
+            'users.nom',
+            'users.prenom',
+            'users.identifiant'
+        );
     }
 
+
+    /**
+     * Retourne les victimes liées
+     * à cet incident.
+     */
     public function victimes()
     {
         return $this->hasMany(Victime::class);
