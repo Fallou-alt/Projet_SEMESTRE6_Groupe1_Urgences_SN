@@ -57,10 +57,6 @@ class Incident extends Model
     }
 
 
-    /**
-     * Retourne l'agent responsable
-     * de la prise en charge de l'incident.
-     */
     public function agent()
     {
         /**
@@ -73,9 +69,10 @@ class Incident extends Model
 
 
     /**
-     * Retourne la liste des agents
-     * affectés à l'incident.
-     */
+ * Retourne tous les agents associés à l'incident.
+ *
+ * Relation plusieurs-à-plusieurs avec les utilisateurs.
+ */
     public function agents()
     {
         return $this->belongsToMany(
