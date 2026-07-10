@@ -547,7 +547,7 @@
                     </button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsDisponiblesEquipe() {
@@ -557,7 +557,7 @@
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Choisir un agent --</option>' +
                 agents.filter(a => a.actif).map(a => `<option value="${a.id}">${a.prenom} ${a.nom}</option>`).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterAgentEquipe() {
@@ -566,14 +566,14 @@
         try {
             await apiCall(`/responsable/incidents/${selectedId}/agents`, 'POST', { agent_id: parseInt(sel.value) });
             chargerEquipe(selectedId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function retirerAgentEquipe(agentId, incidentId) {
         try {
             await apiCall(`/responsable/incidents/${incidentId}/agents/${agentId}`, 'DELETE');
             chargerEquipe(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function sousOnglet(nom) {
@@ -605,7 +605,7 @@
                     <button onclick="supprimerVictime(${v.id},${incidentId})" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.85rem" title="Supprimer"><i class="bi bi-trash"></i></button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterVictime(incidentId) {
@@ -627,7 +627,7 @@
             document.getElementById('v-sexe').value = 'inconnu';
             document.getElementById('v-gs').value = 'inconnu';
             chargerVictimes(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function supprimerVictime(victimeId, incidentId) {
@@ -646,7 +646,7 @@
                 data = await apiCall(`/responsable/incidents/${id}/statut`, 'PATCH', { statut });
             }
             if (data.succes) setTimeout(chargerIncidents, 300);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function affecterAgent(incidentId) {
@@ -656,7 +656,7 @@
         try {
             const data = await apiCall(`/responsable/incidents/${incidentId}/affecter`, 'PATCH', { agent_id: agentId });
             if (data.succes) setTimeout(chargerIncidents, 300);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsDisponibles(incidentId) {
@@ -666,7 +666,7 @@
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Choisir un agent --</option>' +
                 agents.filter(a => a.actif).map(a => `<option value="${a.id}">${a.prenom} ${a.nom}</option>`).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     // Afficher un onglet
@@ -708,7 +708,7 @@
                         </td>
                     </tr>
                 `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function editerAgent(id, prenom, nom) {
