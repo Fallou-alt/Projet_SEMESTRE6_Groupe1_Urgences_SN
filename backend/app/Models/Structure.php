@@ -3,17 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+/**
+ * Représente une structure d'intervention du système
+ * (pompiers, SAMU, police, gendarmerie, etc.).
+ */
 class Structure extends Model
 {
+    /**
+ * Liste des attributs pouvant être assignés en masse.
+ */
     protected $fillable = [
         'nom', 'sigle', 'type', 'region', 'departement', 'commune',
         'adresse', 'telephone', 'email', 'responsable_id',
         'responsable_nom', 'responsable_titre', 'actif',
     ];
     /**
- * Retourne le responsable associé à cette structure.
- */
+    * Récupère le responsable lié à cette structure.
+    */
 
     public function responsable()
     {
@@ -25,7 +31,7 @@ class Structure extends Model
         return $this->hasMany(User::class)->where('role', 'AGENT');
     }
      /**
-     * Retourne tous les utilisateurs rattachés à la structure.
+     * Renvoie tous les utilisateurs rattachés à cette structure.
      */
 
     public function users()

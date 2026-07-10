@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+
     public function up(): void
     {
+         // Création de la table des structures d'intervention
         Schema::create('structures', function (Blueprint $table) {
             $table->id();
             // Informations d'identification de la structure
@@ -35,12 +37,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Ajouter les clés étrangères croisées maintenant que les deux tables existent
-        // Mise en place des relations entre utilisateurs et structures
+        
+        // Définition des relations entre les utilisateurs et les structures
+        // après la création des deux tables afin d'éviter les dépendances circulaires.
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('structure_id')->references('id')->on('structures')->nullOnDelete();
         });
-        // Association du responsable à sa structure
+        // Rattachement du responsable à sa structure
 
         Schema::table('structures', function (Blueprint $table) {
             $table->foreign('responsable_id')->references('id')->on('users')->nullOnDelete();
