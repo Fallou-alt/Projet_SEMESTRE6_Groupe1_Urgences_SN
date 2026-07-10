@@ -234,20 +234,26 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours...';
 
+        const TYPES_MAP = {
+            incendie: 'incendie',
+            accident: 'accident',
+            medical:  'medical',
+            autre:    'autre',
+        };
+
         const body = {
-            type_urgence:       typeSelectionne,
+            type_urgence:       TYPES_MAP[typeSelectionne] ?? typeSelectionne,
             latitude:           latitude,
             longitude:          longitude,
             adresse:            document.getElementById('adresse').value,
             description:        document.getElementById('description').value,
-            nom_citoyen:        document.getElementById('nom_citoyen').value,
-            telephone_citoyen:  document.getElementById('telephone_citoyen').value,
+            citoyen_nom:        document.getElementById('nom_citoyen').value,
+            citoyen_telephone:  document.getElementById('telephone_citoyen').value,
         };
 
         try {
             const data = await apiCall('/incidents', 'POST', body);
-            if (data.success) {
-                // Rediriger vers la page de suivi
+            if (data.succes || data.id) {
                 window.location.href = `suivi.html?id=${data.id}`;
             } else {
                 throw new Error(data.message || 'Erreur lors de l\'envoi.');
