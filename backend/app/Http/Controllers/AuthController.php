@@ -79,13 +79,18 @@ class AuthController extends Controller
         $request->validate([
             'prenom' => 'required|string|max:100',
             'nom'    => 'required|string|max:100',
+            'email'  => 'nullable|email|max:150',
         ]);
 
         $utilisateur = $request->get('_user');
-        $utilisateur->update([
+        $donnees = [
             'prenom' => $request->prenom,
             'nom'    => $request->nom,
-        ]);
+        ];
+        if ($request->filled('email')) {
+            $donnees['email'] = $request->email;
+        }
+        $utilisateur->update($donnees);
 
         return response()->json([
             'succes'      => true,
