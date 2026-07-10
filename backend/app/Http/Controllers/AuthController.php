@@ -59,8 +59,8 @@ class AuthController extends Controller
     public function modifierMotDePasse(Request $request)
     {
         $request->validate([
-            'ancien'  => 'required',
-            'nouveau' => 'required|min:6',
+            'ancien'  => 'required|string',
+            'nouveau' => 'required|string|min:8|max:255',
         ]);
 
         $utilisateur = $request->get('_user');
