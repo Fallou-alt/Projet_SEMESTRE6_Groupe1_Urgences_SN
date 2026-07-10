@@ -9,16 +9,21 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    // authentification : admin, responsable, agent
     public function connexion(Request $request)
     {
         $request->validate([
-            'identifiant'  => 'required|string',
-            'mot_de_passe' => 'required|string',
+            'identifiant'  => 'required|string|max:100',
+            'mot_de_passe' => 'required|string|min:6|max:255',
         ]);
 
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
 
-        if (!$utilisateur || !Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe)) {
+        // Hash::check sur un hash factice si l'utilisateur n'existe pas : évite le timing attack
+        $hashFactice = '$2y$12$abcdefghijklmnopqrstuuVGZbivFExYjegeYToadtuwor/EGfkmy';
+        $mdpValide   = Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe ?? $hashFactice);
+
+        if (!$utilisateur || !$mdpValide) {
             return response()->json(['message' => 'Identifiant ou mot de passe incorrect.'], 401);
         }
 
@@ -26,6 +31,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
+        // token aléatoire 60 chars, pas besoin de JWT ici
         $token = Str::random(60);
         $utilisateur->update(['token' => $token]);
 
@@ -47,14 +53,14 @@ class AuthController extends Controller
         if ($utilisateur) {
             $utilisateur->update(['token' => null]);
         }
-        return response()->json(['succes' => true]);
+        return response()->json(['succes' => true, 'message' => 'Déconnexion réussie.']);
     }
 
     public function modifierMotDePasse(Request $request)
     {
         $request->validate([
-            'ancien'  => 'required',
-            'nouveau' => 'required|min:6',
+            'ancien'  => 'required|string',
+            'nouveau' => 'required|string|min:8|max:255',
         ]);
 
         $utilisateur = $request->get('_user');
@@ -67,18 +73,24 @@ class AuthController extends Controller
         return response()->json(['succes' => true]);
     }
 
+    // modification nom/prénom pour tout utilisateur connecté
     public function modifierProfil(Request $request)
     {
         $request->validate([
             'prenom' => 'required|string|max:100',
             'nom'    => 'required|string|max:100',
+            'email'  => 'nullable|email|max:150',
         ]);
 
         $utilisateur = $request->get('_user');
-        $utilisateur->update([
+        $donnees = [
             'prenom' => $request->prenom,
             'nom'    => $request->nom,
-        ]);
+        ];
+        if ($request->filled('email')) {
+            $donnees['email'] = $request->email;
+        }
+        $utilisateur->update($donnees);
 
         return response()->json([
             'succes'      => true,

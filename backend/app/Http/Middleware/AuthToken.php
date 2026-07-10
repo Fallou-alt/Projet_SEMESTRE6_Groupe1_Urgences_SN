@@ -8,16 +8,22 @@ use Illuminate\Http\Request;
 
 class AuthToken
 {
+    /**
+     * Middleware d'authentification par token simple.
+     * J'aurais pu utiliser Sanctum mais j'ai préféré garder le contrôle
+     * sur la logique d'auth pour ce projet.
+     */
     public function handle(Request $request, Closure $next, string $role = null)
     {
+        // token accepté via header Bearer ou query param (export CSV)
         $token = $request->bearerToken() ?? $request->query('token');
         $user  = $token ? User::where('token', $token)->where('actif', true)->first() : null;
 
         if (!$user) {
-            return response()->json(['message' => 'Non authentifié.'], 401);
+            return response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401);
         }
 
-        // ADMIN passe partout
+        // ADMIN bypass la vérification de rôle
         if ($role && $user->role !== $role && $user->role !== 'ADMIN') {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }

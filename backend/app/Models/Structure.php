@@ -14,7 +14,8 @@ class Structure extends Model
  */
     protected $fillable = [
         'nom', 'sigle', 'type', 'region', 'departement', 'commune',
-        'adresse', 'telephone', 'email', 'responsable_id', 'actif',
+        'adresse', 'telephone', 'email', 'responsable_id',
+        'responsable_nom', 'responsable_titre', 'actif',
     ];
     /**
     * Récupère le responsable lié à cette structure.

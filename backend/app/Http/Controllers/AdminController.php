@@ -7,10 +7,12 @@ use App\Models\Structure;
 use App\Models\User;
 use App\Models\Victime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+    // Données du tableau de bord admin : statistiques globales + les 10 derniers incidents
     public function tableau()
     {
         return response()->json([
@@ -48,7 +50,8 @@ class AdminController extends Controller
 
         $structure = Structure::create($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
 
         return response()->json(['succes' => true, 'structure' => $structure], 201);
@@ -57,16 +60,51 @@ class AdminController extends Controller
     public function modifierStructure(Request $request, $id)
     {
         $structure = Structure::findOrFail($id);
+
+        $request->validate([
+            'nom'  => 'sometimes|required|string',
+            'type' => 'sometimes|required|in:pompiers,samu,police,gendarmerie,marine,protection_civile,autre',
+        ]);
+
         $structure->update($request->only(
             'nom', 'sigle', 'type', 'region', 'departement',
-            'commune', 'adresse', 'telephone', 'email'
+            'commune', 'adresse', 'telephone', 'email',
+            'responsable_nom', 'responsable_titre'
         ));
         return response()->json(['succes' => true, 'structure' => $structure]);
     }
 
     public function supprimerStructure($id)
     {
-        Structure::findOrFail($id)->delete();
+        $structure = Structure::findOrFail($id);
+
+        // On empêche la suppression tant qu'il existe des incidents
+        // non terminés/non annulés rattachés à la structure.
+        $incidentsActifs = Incident::where('structure_id', $id)
+            ->whereNotIn('statut', ['TERMINE', 'ANNULE'])
+            ->count();
+
+        if ($incidentsActifs > 0) {
+            return response()->json([
+                'succes'  => false,
+                'message' => "Impossible de supprimer cette structure : {$incidentsActifs} incident(s) actif(s) y sont rattachés.",
+            ], 409);
+        }
+
+        // On empêche également la suppression tant que du personnel
+        // (responsables ou agents) est encore rattaché à la structure.
+        // Sinon ces utilisateurs se retrouvent avec un structure_id pointant
+        // vers une structure inexistante.
+        $personnelRattache = User::where('structure_id', $id)->count();
+
+        if ($personnelRattache > 0) {
+            return response()->json([
+                'succes'  => false,
+                'message' => "Impossible de supprimer cette structure : {$personnelRattache} membre(s) du personnel y sont rattaché(s).",
+            ], 409);
+        }
+
+        $structure->delete();
         return response()->json(['succes' => true]);
     }
 
@@ -77,10 +115,11 @@ class AdminController extends Controller
         return response()->json(['succes' => true, 'actif' => $structure->actif]);
     }
 
+    // Liste tout le personnel (responsables + agents)
     public function listeResponsables()
     {
         return response()->json(
-            User::where('role', 'RESPONSABLE')
+            User::whereIn('role', ['RESPONSABLE', 'AGENT'])
                 ->with('structure:id,nom,sigle')
                 ->select('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id', 'created_at')
                 ->get()
@@ -97,21 +136,77 @@ class AdminController extends Controller
             'structure_id' => 'required|exists:structures,id',
         ]);
 
+        // La vérification "a-t-elle déjà un responsable ?" et l'assignation
+        // se font dans la même transaction, avec verrou pessimiste sur
+        // la ligne de la structure. Ainsi, si deux requêtes concurrentes
+        // arrivent en même temps pour la même structure, la deuxième
+        // attend que la première ait fini avant de relire l'état à jour de
+        // responsable_id, ce qui évite d'assigner deux responsables à la
+        // même structure.
+        $resultat = DB::transaction(function () use ($request) {
+            $structure = Structure::where('id', $request->structure_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($structure->responsable_id) {
+                return null;
+            }
+
+            $utilisateur = User::create([
+                'identifiant'  => $request->identifiant,
+                'mot_de_passe' => Hash::make($request->mot_de_passe),
+                'nom'          => $request->nom,
+                'prenom'       => $request->prenom,
+                'role'         => 'RESPONSABLE',
+                'structure_id' => $request->structure_id,
+            ]);
+
+            $structure->update(['responsable_id' => $utilisateur->id]);
+
+            return $utilisateur;
+        });
+
+        if ($resultat === null) {
+            return response()->json([
+                'succes'  => false,
+                'message' => 'Cette structure a déjà un responsable assigné. Retirez-le avant d\'en assigner un nouveau.',
+            ], 422);
+        }
+
+        return response()->json([
+            'succes'      => true,
+            // Model::only() n'existe pas sur Eloquent Model (c'est une méthode
+            // de Request/Collection) : on passe donc par collect() pour
+            // pouvoir filtrer les champs à renvoyer sans exposer mot_de_passe.
+            'responsable' => collect($resultat)->only(['id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id']),
+        ], 201);
+    }
+
+    public function creerAgent(Request $request)
+    {
+        $request->validate([
+            'identifiant'  => 'required|unique:users',
+            'mot_de_passe' => 'required|min:6',
+            'nom'          => 'required',
+            'prenom'       => 'required',
+            'structure_id' => 'nullable|exists:structures,id',
+        ]);
+
         $utilisateur = User::create([
             'identifiant'  => $request->identifiant,
             'mot_de_passe' => Hash::make($request->mot_de_passe),
             'nom'          => $request->nom,
             'prenom'       => $request->prenom,
-            'role'         => 'RESPONSABLE',
+            'role'         => 'AGENT',
             'structure_id' => $request->structure_id,
         ]);
 
-        Structure::where('id', $request->structure_id)
-            ->update(['responsable_id' => $utilisateur->id]);
-
         return response()->json([
-            'succes'      => true,
-            'responsable' => $utilisateur->only('id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id'),
+            'succes' => true,
+            // Model::only() n'existe pas sur Eloquent Model (c'est une méthode
+            // de Request/Collection) : on passe donc par collect() pour
+            // pouvoir filtrer les champs à renvoyer sans exposer mot_de_passe.
+            'agent'  => collect($utilisateur)->only(['id', 'identifiant', 'nom', 'prenom', 'role', 'actif', 'structure_id']),
         ], 201);
     }
 
@@ -120,6 +215,23 @@ class AdminController extends Controller
         $utilisateur = User::findOrFail($id);
         $utilisateur->update(['actif' => !$utilisateur->actif]);
         return response()->json(['succes' => true, 'actif' => $utilisateur->actif]);
+    }
+
+    public function supprimerUtilisateur($id)
+    {
+        $utilisateur = User::findOrFail($id);
+
+        if ($utilisateur->role === 'ADMIN') {
+            return response()->json(['succes' => false, 'message' => 'Impossible de supprimer un administrateur.'], 403);
+        }
+
+        // Libérer la structure si c'était un responsable
+        if ($utilisateur->role === 'RESPONSABLE') {
+            Structure::where('responsable_id', $utilisateur->id)->update(['responsable_id' => null]);
+        }
+
+        $utilisateur->delete();
+        return response()->json(['succes' => true]);
     }
 
     public function listeIncidents()
@@ -132,9 +244,17 @@ class AdminController extends Controller
 
     public function statistiques(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
-        $mois      = $request->get('mois');
-        $requete   = Incident::whereYear('created_at', $annee);
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+            'mois'  => 'sometimes|integer|between:1,12',
+        ]);
+
+        $annee   = (int) $request->get('annee', date('Y'));
+        // Cast explicite en entier (ou null), pour que le mois soit
+        // toujours un vrai entier (ou null) dans le JSON de sortie, et
+        // jamais une chaîne de caractères.
+        $mois    = $request->filled('mois') ? (int) $request->get('mois') : null;
+        $requete = Incident::whereYear('created_at', $annee);
 
         if ($mois) {
             $requete->whereMonth('created_at', $mois);
@@ -165,7 +285,7 @@ class AdminController extends Controller
             'par_mois' => collect(range(1, 12))->map(fn($m) => [
                 'mois'  => $m,
                 'total' => $incidents->filter(
-                    fn($i) => (int) date('m', strtotime($i->created_at)) === $m
+                    fn($i) => (int) $i->created_at->format('m') === $m
                 )->count(),
             ]),
             'victimes' => [
@@ -179,32 +299,67 @@ class AdminController extends Controller
         ]);
     }
 
+    // Export CSV pour le bilan annuel
     public function exporterCsv(Request $request)
     {
-        $annee     = $request->get('annee', date('Y'));
+        $request->validate([
+            'annee' => 'sometimes|integer|digits:4',
+        ]);
+
+        $annee     = (int) $request->get('annee', date('Y'));
         $incidents = Incident::whereYear('created_at', $annee)
             ->with(['agent', 'structure'])
             ->latest()->get();
 
-        $csv = "ID,Type,Statut,Adresse,Citoyen,Telephone,Date,Structure\n";
+        // Le BOM UTF-8 (\xEF\xBB\xBF) est placé en tête du fichier pour
+        // qu'Excel, qui suppose de l'ANSI/Latin-1 par défaut, reconnaisse
+        // l'encodage UTF-8 et affiche correctement les caractères accentués
+        // (noms, adresses, structures...) au lieu de les afficher mal
+        // (ex: "Ã©" au lieu de "é").
+        $csv = "\xEF\xBB\xBF";
+        $csv .= "ID,Type,Statut,Adresse,Citoyen,Telephone,Date,Structure\n";
 
         foreach ($incidents as $incident) {
             $structure = $incident->structure?->nom ?? 'Non assignée';
             $csv .= implode(',', [
                 $incident->id,
-                $incident->type_urgence,
-                $incident->statut,
-                '"' . str_replace('"', '""', $incident->adresse ?? '') . '"',
-                '"' . str_replace('"', '""', $incident->citoyen_nom ?? '') . '"',
-                $incident->citoyen_telephone ?? '',
-                $incident->created_at,
-                '"' . $structure . '"',
+                // Ces champs passent tous par la sécurisation CSV, par
+                // cohérence et par précaution si les valeurs autorisées
+                // évoluent un jour.
+                '"' . $this->champCsvSecurise($incident->type_urgence) . '"',
+                '"' . $this->champCsvSecurise($incident->statut) . '"',
+                '"' . $this->champCsvSecurise($incident->adresse) . '"',
+                '"' . $this->champCsvSecurise($incident->citoyen_nom) . '"',
+                '"' . $this->champCsvSecurise($incident->citoyen_telephone) . '"',
+                '"' . $this->champCsvSecurise((string) $incident->created_at) . '"',
+                '"' . $this->champCsvSecurise($structure) . '"',
             ]) . "\n";
         }
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
+            // Le charset=UTF-8 est précisé explicitement dans le
+            // Content-Type, en complément du BOM, pour que tout client
+            // HTTP ou tableur qui lit l'en-tête sache que le corps est
+            // bien encodé en UTF-8.
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=bilan_urgences_{$annee}.csv",
         ]);
+    }
+
+    /**
+     * Prépare une valeur pour l'export CSV : échappe les guillemets et
+     * neutralise les caractères de début de formule (=, +, -, @) afin
+     * qu'un tableur comme Excel n'interprète jamais le contenu comme une formule.
+     */
+    private function champCsvSecurise(?string $valeur): string
+    {
+        $valeur = $valeur ?? '';
+        $valeur = str_replace('"', '""', $valeur);
+
+        if ($valeur !== '' && in_array($valeur[0], ['=', '+', '-', '@'], true)) {
+            $valeur = "'" . $valeur;
+        }
+
+        return $valeur;
     }
 }
