@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tableau de bord SAMU - Gestion des urgences médicales">
     <title>Dashboard SAMU | Urgences SN</title>
     <link rel="stylesheet" href="libs/fonts/fonts.css">
     <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -141,11 +142,11 @@
 
         <!-- Onglets -->
         <ul class="nav nav-tabs-dark">
-            <li class="nav-item"><button class="nav-link active" id="btn-patients" onclick="afficherOnglet('patients')"><i class="bi bi-person-heart me-1"></i> Patients</button></li>
-            <li class="nav-item"><button class="nav-link" id="btn-agents" onclick="afficherOnglet('agents')"><i class="bi bi-people me-1"></i> Agents</button></li>
-            <li class="nav-item"><button class="nav-link" id="btn-carte" onclick="afficherOnglet('carte')"><i class="bi bi-map me-1"></i> Carte</button></li>
-            <li class="nav-item"><button class="nav-link" id="btn-historique" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history me-1"></i> Historique</button></li>
-            <li class="nav-item"><button class="nav-link" id="btn-rapport" onclick="afficherOnglet('rapport')"><i class="bi bi-bar-chart me-1"></i> Rapport</button></li>
+            <li class="nav-item"><button class="nav-link active" id="btn-patients" aria-label="Onglet Patients" onclick="afficherOnglet('patients')"><i class="bi bi-person-heart me-1"></i> Patients</button></li>
+            <li class="nav-item"><button class="nav-link" id="btn-agents" aria-label="Onglet Agents" onclick="afficherOnglet('agents')"><i class="bi bi-people me-1"></i> Agents</button></li>
+            <li class="nav-item"><button class="nav-link" id="btn-carte" aria-label="Onglet Carte" onclick="afficherOnglet('carte')"><i class="bi bi-map me-1"></i> Carte</button></li>
+            <li class="nav-item"><button class="nav-link" id="btn-historique" aria-label="Onglet Historique" onclick="afficherOnglet('historique')"><i class="bi bi-clock-history me-1"></i> Historique</button></li>
+            <li class="nav-item"><button class="nav-link" id="btn-rapport" aria-label="Onglet Rapport" onclick="afficherOnglet('rapport')"><i class="bi bi-bar-chart me-1"></i> Rapport</button></li>
         </ul>
 
         <!-- Onglet : Patients -->
@@ -397,7 +398,7 @@
                 `).join('');
 
             if (selectedId) selectPatient(selectedId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function selectPatient(id) {
@@ -537,7 +538,7 @@
                     </button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsDisponiblesEquipeSamu() {
@@ -547,7 +548,7 @@
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Choisir un agent --</option>' +
                 agents.filter(a => a.actif).map(a => `<option value="${a.id}">${a.prenom} ${a.nom}</option>`).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterAgentEquipeSamu() {
@@ -556,14 +557,14 @@
         try {
             await apiCall(`/responsable/incidents/${selectedId}/agents`, 'POST', { agent_id: parseInt(sel.value) });
             chargerEquipeSamu(selectedId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function retirerAgentEquipeSamu(agentId, incidentId) {
         try {
             await apiCall(`/responsable/incidents/${incidentId}/agents/${agentId}`, 'DELETE');
             chargerEquipeSamu(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerVictimesSamu(incidentId) {
@@ -586,7 +587,7 @@
                     <button onclick="supprimerVictimeSamu(${v.id},${incidentId})" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.85rem"><i class="bi bi-trash"></i></button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterVictimeSamu(incidentId) {
@@ -608,7 +609,7 @@
             document.getElementById('vs-sexe').value = 'inconnu';
             document.getElementById('vs-gs').value = 'inconnu';
             chargerVictimesSamu(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function supprimerVictimeSamu(victimeId, incidentId) {
@@ -706,7 +707,7 @@
                     `).join('')}
                 </div></div>
             `;
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsSamu() {
@@ -735,7 +736,7 @@
                         </td>
                     </tr>
                 `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function editerAgentSamu(id, prenom, nom) {
