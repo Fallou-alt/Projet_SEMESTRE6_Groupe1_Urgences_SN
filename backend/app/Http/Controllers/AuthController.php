@@ -13,8 +13,8 @@ class AuthController extends Controller
     public function connexion(Request $request)
     {
         $request->validate([
-            'identifiant'  => 'required|string',
-            'mot_de_passe' => 'required|string',
+            'identifiant'  => 'required|string|max:100',
+            'mot_de_passe' => 'required|string|min:6|max:255',
         ]);
 
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
