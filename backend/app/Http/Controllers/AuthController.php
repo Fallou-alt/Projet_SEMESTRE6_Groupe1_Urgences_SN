@@ -53,7 +53,7 @@ class AuthController extends Controller
         if ($utilisateur) {
             $utilisateur->update(['token' => null]);
         }
-        return response()->json(['succes' => true]);
+        return response()->json(['succes' => true, 'message' => 'Déconnexion réussie.']);
     }
 
     public function modifierMotDePasse(Request $request)
