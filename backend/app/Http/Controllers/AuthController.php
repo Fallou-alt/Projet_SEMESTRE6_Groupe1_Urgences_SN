@@ -13,8 +13,8 @@ class AuthController extends Controller
     public function connexion(Request $request)
     {
         $request->validate([
-            'identifiant'  => 'required|string',
-            'mot_de_passe' => 'required|string',
+            'identifiant'  => 'required|string|max:100',
+            'mot_de_passe' => 'required|string|min:6|max:255',
         ]);
 
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
@@ -53,14 +53,14 @@ class AuthController extends Controller
         if ($utilisateur) {
             $utilisateur->update(['token' => null]);
         }
-        return response()->json(['succes' => true]);
+        return response()->json(['succes' => true, 'message' => 'Déconnexion réussie.']);
     }
 
     public function modifierMotDePasse(Request $request)
     {
         $request->validate([
-            'ancien'  => 'required',
-            'nouveau' => 'required|min:6',
+            'ancien'  => 'required|string',
+            'nouveau' => 'required|string|min:8|max:255',
         ]);
 
         $utilisateur = $request->get('_user');
@@ -79,13 +79,18 @@ class AuthController extends Controller
         $request->validate([
             'prenom' => 'required|string|max:100',
             'nom'    => 'required|string|max:100',
+            'email'  => 'nullable|email|max:150',
         ]);
 
         $utilisateur = $request->get('_user');
-        $utilisateur->update([
+        $donnees = [
             'prenom' => $request->prenom,
             'nom'    => $request->nom,
-        ]);
+        ];
+        if ($request->filled('email')) {
+            $donnees['email'] = $request->email;
+        }
+        $utilisateur->update($donnees);
 
         return response()->json([
             'succes'      => true,

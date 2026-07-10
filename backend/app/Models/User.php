@@ -44,4 +44,9 @@ class User extends Model
     {
         return $this->role === 'AGENT';
     }
+
+    public function isActif(): bool
+    {
+        return (bool) $this->actif;
+    }
 }
