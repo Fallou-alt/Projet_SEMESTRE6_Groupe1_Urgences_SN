@@ -398,7 +398,7 @@
                 `).join('');
 
             if (selectedId) selectPatient(selectedId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function selectPatient(id) {
@@ -538,7 +538,7 @@
                     </button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsDisponiblesEquipeSamu() {
@@ -548,7 +548,7 @@
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Choisir un agent --</option>' +
                 agents.filter(a => a.actif).map(a => `<option value="${a.id}">${a.prenom} ${a.nom}</option>`).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterAgentEquipeSamu() {
@@ -557,14 +557,14 @@
         try {
             await apiCall(`/responsable/incidents/${selectedId}/agents`, 'POST', { agent_id: parseInt(sel.value) });
             chargerEquipeSamu(selectedId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function retirerAgentEquipeSamu(agentId, incidentId) {
         try {
             await apiCall(`/responsable/incidents/${incidentId}/agents/${agentId}`, 'DELETE');
             chargerEquipeSamu(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerVictimesSamu(incidentId) {
@@ -587,7 +587,7 @@
                     <button onclick="supprimerVictimeSamu(${v.id},${incidentId})" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.85rem"><i class="bi bi-trash"></i></button>
                 </div>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function ajouterVictimeSamu(incidentId) {
@@ -609,7 +609,7 @@
             document.getElementById('vs-sexe').value = 'inconnu';
             document.getElementById('vs-gs').value = 'inconnu';
             chargerVictimesSamu(incidentId);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function supprimerVictimeSamu(victimeId, incidentId) {
@@ -707,7 +707,7 @@
                     `).join('')}
                 </div></div>
             `;
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     async function chargerAgentsSamu() {
@@ -736,7 +736,7 @@
                         </td>
                     </tr>
                 `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Erreur:', e); }
     }
 
     function editerAgentSamu(id, prenom, nom) {
