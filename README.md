@@ -3,7 +3,8 @@
 > Projet de fin de licence en Informatique de Gestion — Université de Dakar, 2025
 
 **Repository** : https://github.com/Fallou-alt/Urgences_SN 
-**Maquette Figma** : *(lien à ajouter)*
+**Maquette Figma** :https://www.figma.com/design/OcJkUDSmkOmCkhYZtGyXZ6/Maquette_Urgence_SN?node-id=0- 1&p=f&t=XfooD6qTXi1owDO2-0
+
 
 ## Contexte
 
