@@ -20,7 +20,7 @@ class AuthController extends Controller
         $utilisateur = User::where('identifiant', $request->identifiant)->first();
 
         // Hash::check sur un hash factice si l'utilisateur n'existe pas : évite le timing attack
-        $hashFactice = '$2y$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
+        $hashFactice = '$2y$12$abcdefghijklmnopqrstuuVGZbivFExYjegeYToadtuwor/EGfkmy';
         $mdpValide   = Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe ?? $hashFactice);
 
         if (!$utilisateur || !$mdpValide) {
